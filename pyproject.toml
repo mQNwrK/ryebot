@@ -1,0 +1,14 @@
+[build-system]
+requires = ["setuptools"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "ryebot"
+dependencies = [
+    "custom_mwclient @ git+https://github.com/h9a-rD4ubXs8/custom_mwclient.git@main"
+]
+requires-python = ">=3.9"
+dynamic = ["version"]
+
+[tool.setuptools.dynamic]
+version = {file = "version.txt"}
