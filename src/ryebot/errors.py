@@ -21,3 +21,15 @@ class WrongWikiError(Exception):
             f'Target wiki was "{self.expected_wiki}", current wiki is '
             f'"{self.actual_wiki}" ({self.fullurl})!'
         )
+
+
+class NonexistentScriptConfigPageError(Exception):
+    def __init__(self, scriptname: str, pagename: str):
+        self.scriptname = scriptname
+        self.pagename = pagename
+
+    def __str__(self):
+        return (
+            f'The configuration page for the "{self.scriptname}" script could '
+            f'not be found at "{self.pagename}"!'
+        )
