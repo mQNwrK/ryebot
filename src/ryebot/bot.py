@@ -4,4 +4,5 @@ class Bot():
     scriptname_to_run = ''
     dry_run = False
     site = None
+    other_sites = {}
     common_summary_suffix = ''
