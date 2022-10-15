@@ -13,7 +13,7 @@ def testscript():
     limit = 10
     period = 7
     target_page = 'User:Rye Greenwood/Sandbox25'
-    summary = ''
+    summary = Bot.summary('')
     i = -1
     while i < limit - 1:
         i += 1
