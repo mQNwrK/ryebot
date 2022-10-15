@@ -17,8 +17,11 @@ logger = logging.getLogger(__name__)
 
 def main():
     """Main entry function."""
-    setup_logging()
-    parse_commandline_args()  # fill `Bot` variables from the command line
+    args = parse_commandline_args()
+    Bot.scriptname_to_run = args.script
+    Bot.dry_run = args.dryrun
+    Bot.is_on_github_actions = args.github
+    setup_logging(debug_on_console=args.verbose)
     logger.info(
         f"Started ryebot v{metadata.version(__package__)} main.py for "
         f'script "{Bot.scriptname_to_run}".'
@@ -89,23 +92,21 @@ def main_for_github_actions():
         logger.info("Successfully completed main.py.")
 
 
-def parse_commandline_args():
+def parse_commandline_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser()
     parser.add_argument('script', choices=['testscript'])
     parser.add_argument('--dryrun', action='store_true')
     parser.add_argument('-g', '--github', action='store_true')
-    args = parser.parse_args()
-    Bot.scriptname_to_run = args.script
-    Bot.dry_run = args.dryrun
-    Bot.is_on_github_actions = args.github
+    parser.add_argument('-v', '--verbose', action='store_true')
+    return parser.parse_args()
 
 
-def setup_logging():
+def setup_logging(debug_on_console: bool = False):
     ryebotLogger.setLevel(logging.DEBUG)
 
     # create a new handler to print to console
-    print_to_console = logging.StreamHandler() # handler that will manage printing to console
-    print_to_console.setLevel(logging.INFO)
+    print_to_console = logging.StreamHandler()
+    print_to_console.setLevel(logging.DEBUG if debug_on_console else logging.INFO)
 
     # register handler to logger
     ryebotLogger.addHandler(print_to_console)
