@@ -6,6 +6,7 @@ import sys
 
 from ryebot.bot import Bot
 from ryebot.core import ryebot_core
+from ryebot.scripts import scriptfunctions
 from ryebot.errors import WrongUserError, WrongWikiError
 
 
@@ -94,7 +95,7 @@ def main_for_github_actions():
 
 def parse_commandline_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser()
-    parser.add_argument('script', choices=['testscript'])
+    parser.add_argument('script', choices=scriptfunctions.keys())
     parser.add_argument('--dryrun', action='store_true')
     parser.add_argument('-g', '--github', action='store_true')
     parser.add_argument('-v', '--verbose', action='store_true')

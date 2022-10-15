@@ -8,7 +8,7 @@ from ryebot.bot import Bot
 logger = logging.getLogger(__name__)
 
 
-def testscript():
+def script_main():
     logger.info("Started testscript.")
     limit = 10
     period = 7
