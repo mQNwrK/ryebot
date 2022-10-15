@@ -14,7 +14,7 @@ def login(lang: str = "en"):
     logger.info(f'Logging in to wiki "{targetwiki}"...')
 
     wiki_auth = WikiAuth.from_env("RYEBOT_USERNAME", "RYEBOT_PASSWORD")
-    site = WikiggClient(targetwiki, credentials=wiki_auth)  # this is the actual login
+    site = WikiggClient("terraria", lang=lang, credentials=wiki_auth)  # this is the actual login
 
     # --- validate wikiname post-login ---
     wiki_id = site.get_current_wiki_name()
