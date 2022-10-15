@@ -3,23 +3,35 @@ import random
 import time
 
 from ryebot.bot import Bot
+from ryebot.script_configuration import ScriptConfiguration
 
 
 logger = logging.getLogger(__name__)
 
 
+DEFAULT_CONFIG = {
+    "period": 7,
+    "limit": 100,
+    "target_page": "User:Rye Greenwood/Sandbox25"
+}
+
+
 def script_main():
     logger.info("Started testscript.")
-    limit = 10
-    period = 7
-    target_page = 'User:Rye Greenwood/Sandbox25'
+    config = ScriptConfiguration("testscript", DEFAULT_CONFIG)
+    logger.info(config)
+    logger.info(config.is_default())
+    config.update_from_wiki()
+    logger.info(config)
+    logger.info(config.is_default())
+
     summary = Bot.summary('')
     i = -1
-    while i < limit - 1:
+    while i < config["limit"] - 1:
         i += 1
 
         # prepare the new page text
-        page = Bot.site.pages[target_page]  # page is now an mwclient.Page object
+        page = Bot.site.pages[config["target_page"]]  # page is now an mwclient.Page object
         new_random_number = random.randint(0, 1)
         text = page.text() + ' ' + str(new_random_number)
         logger.info(f'Loop iteration #{i}. Adding number: {new_random_number}')
@@ -35,6 +47,6 @@ def script_main():
             logger.info(f'Saved page "{page.name}" with summary "{summary}".')
 
         # sleep until next loop iteration
-        logger.info(f"Sleeping for {period} seconds...")
-        time.sleep(period)
+        logger.info(f"Sleeping for {config['period']} seconds...")
+        time.sleep(config["period"])
         logger.info("Woke up.")
