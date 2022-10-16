@@ -123,7 +123,7 @@ def script_main():
             else:
                 stopwatch = Stopwatch()
                 try:
-                    site.save(targetpage, pagetext, summary=summary, minor=True)
+                    saveresult = site.save(targetpage, pagetext, summary=summary, minor=True)
                 except ProtectedPageError:
                     logger.info("Page is protected, skipped it.")
                 except Exception:
@@ -132,7 +132,7 @@ def script_main():
                     stopwatch.stop()
                     logger.info(
                         f'Saved page "{page.name}" with summary "{summary}". '
-                        f'Time: {stopwatch}'
+                        f"Diff ID: {saveresult.get('newrevid')}. Time: {stopwatch}"
                     )
 
     logger.info("Completed syncing to all wikis.")
