@@ -45,11 +45,11 @@ def script_main():
             )
         else:
             stopwatch = Stopwatch()
-            Bot.site.save(page, text, summary=summary, minor=True)
+            saveresult = Bot.site.save(page, text, summary=summary, minor=True)
             stopwatch.stop()
             logger.info(
                 f'Saved page "{page.name}" with summary "{summary}". '
-                f"Time: {stopwatch}"
+                f"Diff ID: {saveresult.get('newrevid')}. Time: {stopwatch}"
             )
 
         # sleep until next loop iteration
