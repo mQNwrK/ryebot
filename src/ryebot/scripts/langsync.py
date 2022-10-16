@@ -121,13 +121,30 @@ def script_main():
                     f'summary "{summary}".'
                 )
             else:
+                didntsave_text = f'Did not sync "{wiki}:{targetpage.name}"'
                 stopwatch = Stopwatch()
                 try:
                     saveresult = site.save(targetpage, pagetext, summary=summary, minor=True)
                 except ProtectedPageError:
-                    logger.info("Page is protected, skipped it.")
+                    logger.warn(
+                        "Page is protected, skipped it.",
+                        extra = {
+                            "head": didntsave_text,
+                            "body": "Couldn't save the page because it is protected."
+                        }
+                    )
                 except Exception:
-                    logger.exception("Error while saving, skipped page.")
+                    logger.exception("Error while saving:")
+                    logger.warn(
+                        "Skipped page due to error.",
+                        extra = {
+                            "head": didntsave_text,
+                            "body": (
+                                "Couldn't save the page due to some error; "
+                                "check the logs for details."
+                            )
+                        }
+                    )
                 else:
                     stopwatch.stop()
                     logger.info(
@@ -144,19 +161,31 @@ def _validate_wikis_from_config(wikis_from_config: str) -> list[str]:
     logger.debug(f"Wikis from config parsed as list: {sorted(wikis_from_config)}")
     # get dynamic if list if possible, this hardcoded list is the fallback
     valid_wikis = {"de", "fr", "hu", "ko", "ru", "pl", "pt", "uk", "zh"}
+    is_hardcoded = False
     try:
         valid_wikis = Bot.site.expandtemplates('{{langList|offWiki}}')
     except Exception:
+        is_hardcoded = True
         logger.exception("Fetching the off-wiki list failed:")
         logger.info("Using the potentially outdated hardcoded list.")
     else:
         valid_wikis = str_to_set(valid_wikis)
     logger.debug("Valid wikis: " + str(sorted(valid_wikis)))
     if not wikis_from_config <= valid_wikis:
-        logger.debug(
-            "The following wikis from the config are dismissed: "
-            + str(list(wikis_from_config - valid_wikis))
-        )
+        dismissed = str(sorted(wikis_from_config - valid_wikis))
+        logger.debug(f"The following wikis from the config are dismissed: {dismissed}")
+        if is_hardcoded:
+            logger.warn(
+                f"Using the hardcoded list and dismissed {len(dismissed)} wikis.",
+                extra = {
+                    "head": "One or more wikis might be ignored unexpectedly",
+                    "body": (
+                        "The following wiki(s) from the config are ignored: "
+                        f"{dismissed}. They might be incorrectly regarded as "
+                        "invalid, because the most recent off-wiki list couldn't "
+                        "be downloaded."
+                    )
+                })
     return sorted(valid_wikis & wikis_from_config)
 
 
