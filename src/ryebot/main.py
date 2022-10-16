@@ -111,3 +111,8 @@ def setup_logging(debug_on_console: bool = False):
 
     # register handler to logger
     ryebotLogger.addHandler(print_to_console)
+
+    # enable warnings from the mwclient library
+    mwclientLogger = logging.getLogger("mwclient")
+    mwclientLogger.setLevel(logging.WARNING)
+    mwclientLogger.addHandler(print_to_console)
