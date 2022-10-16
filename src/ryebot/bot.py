@@ -18,4 +18,7 @@ class Bot():
             # if they put such a long suffix)
             if len(summary_core_text) > coretext_limit:
                 summary_core_text = summary_core_text[:coretext_limit - 3] + "..."
-        return summary_core_text + Bot.common_summary_suffix
+        suffix = Bot.common_summary_suffix
+        if summary_core_text == '':
+            suffix = suffix.lstrip()  # prevent leading spaces from the suffix
+        return summary_core_text + suffix
