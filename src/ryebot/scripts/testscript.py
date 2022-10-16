@@ -4,6 +4,7 @@ import time
 
 from ryebot.bot import Bot
 from ryebot.script_configuration import ScriptConfiguration
+from ryebot.stopwatch import Stopwatch
 
 
 logger = logging.getLogger(__name__)
@@ -43,8 +44,13 @@ def script_main():
                 f'summary "{summary}".'
             )
         else:
+            stopwatch = Stopwatch()
             Bot.site.save(page, text, summary=summary, minor=True)
-            logger.info(f'Saved page "{page.name}" with summary "{summary}".')
+            stopwatch.stop()
+            logger.info(
+                f'Saved page "{page.name}" with summary "{summary}". '
+                f"Time: {stopwatch}"
+            )
 
         # sleep until next loop iteration
         logger.info(f"Sleeping for {config['period']} seconds...")
