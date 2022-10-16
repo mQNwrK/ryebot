@@ -88,8 +88,8 @@ def main_for_github_actions():
         logger.exception('')
         sys.exit(1)  # explicitly fail
     else:
-        with open(workflow_summary_filename, 'a') as f:
-            f.write("### All good.\n")
+        # with open(workflow_summary_filename, 'a') as f:
+        #     f.write("### All good.\n")
         logger.info("Successfully completed main.py.")
 
 
