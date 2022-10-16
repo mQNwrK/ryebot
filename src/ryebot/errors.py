@@ -33,3 +33,14 @@ class NonexistentScriptConfigPageError(Exception):
             f'The configuration page for the "{self.scriptname}" script could '
             f'not be found at "{self.pagename}"!'
         )
+
+
+class StopwatchError(Exception):
+    def __init__(self, running: bool = False):
+        self.running = running
+
+    def __str__(self):
+        if self.running:
+            return "Can't start an already-running stopwatch!"
+        else:
+            return "Can't stop a stopwatch that isn't running!"
