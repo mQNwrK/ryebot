@@ -126,7 +126,7 @@ def script_main():
                 try:
                     saveresult = site.save(targetpage, pagetext, summary=summary, minor=True)
                 except ProtectedPageError:
-                    logger.warn(
+                    logger.warning(
                         "Page is protected, skipped it.",
                         extra = {
                             "head": didntsave_text,
@@ -135,7 +135,7 @@ def script_main():
                     )
                 except Exception:
                     logger.exception("Error while saving:")
-                    logger.warn(
+                    logger.warning(
                         "Skipped page due to error.",
                         extra = {
                             "head": didntsave_text,
@@ -175,7 +175,7 @@ def _validate_wikis_from_config(wikis_from_config: str) -> list[str]:
         dismissed = str(sorted(wikis_from_config - valid_wikis))
         logger.debug(f"The following wikis from the config are dismissed: {dismissed}")
         if is_hardcoded:
-            logger.warn(
+            logger.warning(
                 f"Using the hardcoded list and dismissed {len(dismissed)} wikis.",
                 extra = {
                     "head": "One or more wikis might be ignored unexpectedly",
