@@ -101,6 +101,11 @@ def script_main():
                 targetpage_log += f" -> {targetpage_name}"
             logger.info(f"{i+1: {w}}/{total}: {targetpage_log}")
 
+            summary = Bot.summary(
+                f"[[:en:User:Ryebot/bot/scripts/langsync|sync]] :: en "
+                f"revid:{page.revision}::"
+            )
+
             try:
                 targetpage = site.pages[targetpage_name]
             except Exception as exc:
@@ -108,10 +113,6 @@ def script_main():
                 continue
 
             pagetext = page.text()
-            summary = Bot.summary(
-                f"[[:en:User:Ryebot/bot/scripts/langsync|sync]] :: en "
-                f"revid:{page.revision}::"
-            )
             if Bot.dry_run:
                 chardiff = len(pagetext) - (targetpage.length or 0)
                 chardiff_str = '+' if chardiff > 0 else ''
