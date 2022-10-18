@@ -1,11 +1,14 @@
+from custom_mwclient import WikiClient
+
+
 class Bot():
     """Provides module-wide variables and functions."""
-    is_on_github_actions = False
-    scriptname_to_run = ''
-    dry_run = False
-    site = None
-    other_sites = {}
-    common_summary_suffix = ''
+    is_on_github_actions: bool = False
+    scriptname_to_run: str = ''
+    dry_run: bool = False
+    site: WikiClient = None
+    other_sites: dict[str, WikiClient] = {}
+    common_summary_suffix: str = ''
 
     def summary(summary_core_text: str = ''):
         """Append the common suffix, truncating the core text if necessary."""
