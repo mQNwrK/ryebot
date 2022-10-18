@@ -106,10 +106,21 @@ def script_main():
                 f"revid:{page.revision}::"
             )
 
+            # fetch the page from the target wiki
             try:
                 targetpage = site.pages[targetpage_name]
-            except Exception as exc:
-                logger.exception(f'Error while reading "{targetpage_name}" on {wiki}. Skipped it.')
+            except Exception:
+                logger.exception(f'Error while reading "{targetpage_name}" on {wiki}:')
+                logger.warning(
+                    "Skipped page due to error.",
+                    extra = {
+                        "head": f'Did not sync "{wiki}:{targetpage_name}"',
+                        "body": (
+                            f"Couldn't read the page on {wiki} due to some error; "
+                            "check the logs for details."
+                        )
+                    }
+                )
                 continue
 
             pagetext = page.text()
