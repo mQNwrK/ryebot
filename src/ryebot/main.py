@@ -1,7 +1,9 @@
 import argparse
+from http.client import responses
 from importlib import metadata
 import logging
 import os
+import re
 import sys
 
 from ryebot.bot import Bot
@@ -76,6 +78,24 @@ def main_for_github_actions():
     handler = logging.StreamHandler()
     handler.setFormatter(CustomFormatter())
     ryebotLogger.addHandler(handler)
+
+    # when the wiki returns a 5xx error (e.g. 504 Gateway Error), then the
+    # mwclient.client.Site.raw_call function logs a warning with the entire
+    # HTML source of the error page. That clogs up the log very much, so we
+    # trim these specific messages here
+    pattern = re.compile(r"Received (?P<statuscode>5\d\d) response: ")
+    def trim_5xx_errormsg(record: logging.LogRecord):
+        if record.msg.endswith(". Retrying in a moment."):
+            match = pattern.match(record.msg)
+            if match:
+                statuscode = int(match["statuscode"])
+                statuscodetext = ' ' + responses.get(statuscode, '')
+                record.msg = (
+                    f"Wiki returned error {statuscode}{statuscodetext.rstrip()}!"
+                    " Retrying in a moment."
+                )
+        return True
+    logging.getLogger("mwclient.client").addFilter(trim_5xx_errormsg)
 
     Bot.common_summary_suffix = f"  »ID:{workflow_run_id}«"
 
