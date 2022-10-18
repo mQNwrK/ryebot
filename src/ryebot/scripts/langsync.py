@@ -122,8 +122,25 @@ def script_main():
                     }
                 )
                 continue
+            didntsave_text = f'Did not sync "{wiki}:{targetpage.name}"'
 
-            pagetext = page.text()
+            # read the English page text
+            try:
+                pagetext = page.text()
+            except Exception:
+                logger.exception(f'Error while reading text of "{page.name}" from EN:')
+                logger.warning(
+                    "Skipped page due to error.",
+                    extra = {
+                        "head": didntsave_text,
+                        "body": (
+                            f"Couldn't read the text of \"en:{page.name}\" "
+                            "due to some error; check the logs for details."
+                        )
+                    }
+                )
+                continue
+
             if Bot.dry_run:
                 chardiff = len(pagetext) - (targetpage.length or 0)
                 chardiff_str = '+' if chardiff > 0 else ''
@@ -134,7 +151,6 @@ def script_main():
                     f'summary "{summary}".'
                 )
             else:
-                didntsave_text = f'Did not sync "{wiki}:{targetpage.name}"'
                 stopwatch = Stopwatch()
                 try:
                     saveresult = site.save(targetpage, pagetext, summary=summary, minor=True)
