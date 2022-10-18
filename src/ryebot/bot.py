@@ -9,6 +9,7 @@ class Bot():
     site: WikiClient = None
     other_sites: dict[str, WikiClient] = {}
     common_summary_suffix: str = ''
+    script_output: str = ''
 
     def summary(summary_core_text: str = ''):
         """Append the common suffix, truncating the core text if necessary."""

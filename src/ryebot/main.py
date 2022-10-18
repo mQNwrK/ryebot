@@ -51,6 +51,11 @@ def main_for_github_actions():
     workflow_summary_filename = os.getenv("GITHUB_STEP_SUMMARY")
     workflow_run_id = os.getenv("GITHUB_RUN_ID")
 
+    def write_summary():
+        if Bot.script_output and workflow_summary_filename:
+            with open(workflow_summary_filename, 'a') as f:
+                f.write(Bot.script_output)
+
     class CustomFormatter(logging.Formatter):
         def format(self, record: logging.LogRecord):
             head = getattr(record, "head", None)
@@ -107,9 +112,12 @@ def main_for_github_actions():
             f.write(str(e))
         logger.exception('')
         sys.exit(1)  # explicitly fail
+    except Exception as exc:
+        logger.exception(str(exc))
+        write_summary()
+        sys.exit(1)  # explicitly fail
     else:
-        # with open(workflow_summary_filename, 'a') as f:
-        #     f.write("### All good.\n")
+        write_summary()
         logger.info("Successfully completed main.py.")
 
 
