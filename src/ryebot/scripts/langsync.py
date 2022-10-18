@@ -177,7 +177,7 @@ def script_main():
                 else:
                     stopwatch.stop()
                     logger.info(
-                        f'Saved page "{page.name}" with summary "{summary}". '
+                        f'Saved page "{targetpage.name}" with summary "{summary}". '
                         f"Diff ID: {saveresult.get('newrevid')}. Time: {stopwatch}"
                     )
 
