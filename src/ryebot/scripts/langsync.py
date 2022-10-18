@@ -86,6 +86,7 @@ def script_main():
         return
 
     # ------------- Save pages on langwikis -------------
+    saveresults: dict[str, list[tuple[str, dict, Stopwatch]]] = {}
     for wiki in wikis:
         logger.info('+' * 40 + ' ' + wiki.upper())
         site = login(wiki)
@@ -180,8 +181,58 @@ def script_main():
                         f'Saved page "{targetpage.name}" with summary "{summary}". '
                         f"Diff ID: {saveresult.get('newrevid')}. Time: {stopwatch}"
                     )
+                    saveresults.setdefault(wiki, []).append((page.name, saveresult, stopwatch))
 
     logger.info("Completed syncing to all wikis.")
+    Bot.script_output = format_saveresults(saveresults)
+
+
+def format_saveresults(saveresults: dict[str, list[tuple[str, dict, Stopwatch]]]):
+    table_total = (
+        "| Wiki | Pages<br/>synced | Pages<br/>changed |\n"
+        "| --- | ---: | ---: |\n"
+    )
+    if len(saveresults) == 0:
+        return table_total
+
+    details_tables = []
+    for wiki, pagesaves in saveresults.items():
+        pages_synced = len(pagesaves)
+        pages_changed = 0
+        details_table = (
+            f"<details><summary><b>{wiki.upper()}</b></summary>\n\n"
+            "| English page | Language wiki page | Diff | Time |\n"
+            "| --- | --- | --- | --- |"
+        )
+        for en_pagename, saveresult, stopwatch in pagesaves:
+            nochange = 'newrevid' not in saveresult
+            details_table += (
+                f"\n| [{en_pagename}]({Bot.site.fullurl(title=en_pagename)}) "
+                f"| [{saveresult['title']}]"
+                f"({Bot.other_sites[wiki].fullurl(curid=saveresult['pageid'])}) "
+            )
+            if nochange:
+                details_table += "| [null edit] "
+            else:
+                pages_changed += 1
+                details_table += (
+                    f"| [{saveresult['newrevid']}]"
+                    f"({Bot.other_sites[wiki].fullurl(diff=saveresult['newrevid'])}) "
+                )
+            details_table += f"| {stopwatch} |"
+        details_table += "\n</details>"
+        details_tables.append(details_table)
+        table_total += (
+            f"| [`{wiki.upper()}`]"
+            f"({Bot.other_sites[wiki].fullurl(title='Special:Contribs/Ryebot')})"
+            f"| {pages_synced} | {pages_changed} |\n"
+        )
+    return (
+        "### Total\n"
+        + table_total
+        + "\n### Details\n"
+        + '\n'.join(details_tables)
+    )
 
 
 def _validate_wikis_from_config(wikis_from_config: str) -> list[str]:
