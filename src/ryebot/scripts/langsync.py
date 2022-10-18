@@ -2,6 +2,7 @@ import math
 import logging
 
 from mwclient.errors import InvalidPageTitle, ProtectedPageError
+from mwclient.page import Page
 
 from ryebot.bot import Bot
 from ryebot.login import login
@@ -41,8 +42,8 @@ def script_main():
     logger.info(f"Pages to sync (base): {sorted(p.name for p in pages_base)}")
 
     # handle language-specific cfg
-    pages = {}
-    targetpages = {}
+    pages: dict[str, list[Page]] = {}
+    targetpages: dict[str, dict[str, str]] = {}
     for wiki in wikis:
         pages[wiki] = pages_base.copy()
 
