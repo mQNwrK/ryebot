@@ -5,7 +5,7 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "ryebot"
 dependencies = [
-    "custom_mwclient @ git+https://github.com/h9a-rD4ubXs8/custom_mwclient.git@v0.2.0",
+    "custom_mwclient @ git+https://github.com/h9a-rD4ubXs8/custom_mwclient.git@main",
     "mwparserfromhell~=0.6"
 ]
 requires-python = ">=3.9"
