@@ -89,12 +89,25 @@ def main_for_github_actions():
     # HTML source of the error page. That clogs up the log very much, so we
     # trim these specific messages here
     pattern = re.compile(r"Received (?P<statuscode>5\d\d) response: ")
+    # http.client.responses only contains the IANA codes;
+    # the following are Cloudflare-specific;
+    # source: https://en.wikipedia.org/wiki/List_of_HTTP_status_codes#Cloudflare
+    statuscode_texts = responses | {
+        520: "Web Server Returned an Unknown Error",
+        521: "Web Server Is Down",
+        522: "Connection Timed Out",
+        523: "Origin Is Unreachable",
+        524: "A Timeout Occurred",
+        525: "SSL Handshake Failed",
+        526: "Invalid SSL Certificate",
+        527: "Railgun Error"
+    }
     def trim_5xx_errormsg(record: logging.LogRecord):
         if record.msg.endswith(". Retrying in a moment."):
             match = pattern.match(record.msg)
             if match:
                 statuscode = int(match["statuscode"])
-                statuscodetext = ' ' + responses.get(statuscode, '')
+                statuscodetext = ' ' + statuscode_texts.get(statuscode, '')
                 record.msg = (
                     f"Wiki returned error {statuscode}{statuscodetext.rstrip()}!"
                     " Retrying in a moment."
