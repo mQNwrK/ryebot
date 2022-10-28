@@ -28,4 +28,10 @@ python3 -m ryebot [-v] [-g] [--dryrun] SCRIPT
 
 The mandatory argument `SCRIPT` is the name of one of the [available scripts](src/ryebot/scripts) that is to be executed by Ryebot.
 
-Ryebot needs to login to the wiki. The credentials for this login are currently by default loaded from environment variables which are to be named `RYEBOT_USERNAME` (user name of the bot account + `@` + name of the bot password) and `RYEBOT_PASSWORD` (bot password).
+### Login
+
+Ryebot needs to login to the wiki. It requires a "bot password" for this (which can be created for any account, not just designated bot accounts). This can be created at `Special:BotPasswords` of the wiki that Ryebot will run on.
+
+The bot password's "name" and the actual password need to be stored in environment variables named `RYEBOT_USERNAME` (name of the user account + `@` + name of the bot password) and `RYEBOT_PASSWORD` (the actual bot password). This is currently the only method of authentication.
+
+Example: Your user account is `User:John Doe`. Head to `Special:BotPasswords` and create a bot password named `ryebot` with all the necessary rights. Copy the long alphanumeric string displayed when finishing the creation of the bot password (this is the actual bot password) and paste it in the environment variable `RYEBOT_PASSWORD`. In the environment variable `RYEBOT_USERNAME`, put `John Doe@ryebot`.
