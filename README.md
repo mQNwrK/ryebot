@@ -28,4 +28,4 @@ python3 -m ryebot [-v] [-g] [--dryrun] SCRIPT
 
 The mandatory argument `SCRIPT` is the name of one of the [available scripts](src/ryebot/scripts) that is to be executed by Ryebot.
 
-<!-- TODO: authentication -->
+Ryebot needs to login to the wiki. The credentials for this login are currently by default loaded from environment variables which are to be named `RYEBOT_USERNAME` (user name of the bot account + `@` + name of the bot password) and `RYEBOT_PASSWORD` (bot password).
