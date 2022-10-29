@@ -37,7 +37,7 @@ def script_main():
         return
 
     if Bot.dry_run:
-        logger.info(f'Would save page "{module_page.name}"  with summary "{summary}".')
+        logger.info(f'Would save page "{module_page.name}" with summary "{summary}".')
     else:
         stopwatch = Stopwatch()
         try:
@@ -60,15 +60,9 @@ def script_main():
             logger.info(
                 (
                     f'Saved page "{module_page.name}" with summary "{summary}". '
-                    f"Diff ID: {diff_id}. Time: {stopwatch}"
+                    f"Diff: {diff_link if diff_link else 'None'}. Time: {stopwatch}"
                 ),
-                extra = {
-                    "head": "Updated successfully",
-                    "body": (
-                        "Saved the update"
-                        + (f": {diff_link}." if diff_link else " (without changes).")
-                    )
-                }
+                extra = {"head": "Updated successfully"}
             )
 
 

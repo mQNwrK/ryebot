@@ -62,7 +62,7 @@ def main_for_github_actions(log_debug: bool = False):
         def format(self, record: logging.LogRecord):
             head = getattr(record, "head", None)
             body = getattr(record, "body", None)
-            if not head and not body:
+            if head is None:
                 return super().format(record)
             outputtype = "notice"
             if record.levelno == logging.DEBUG:
@@ -77,7 +77,7 @@ def main_for_github_actions(log_debug: bool = False):
             return "::{}{}::{}".format(
                 outputtype,
                 '' if head is None else f" title={head}",
-                body or record.msg
+                body or record.msg or ''
             )
 
     for handler in reversed(ryebotLogger.handlers):
