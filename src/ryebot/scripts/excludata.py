@@ -18,7 +18,7 @@ def script_main():
     target_module_name = "Module:Exclusive/data"
 
     _purge_data_template(data_template_name)
-    template_output = _read_data_template()
+    template_output = _read_data_template(data_template_name)
 
     # validate template output
     _error_if_is_too_small(data_template_name, template_output, 800)
