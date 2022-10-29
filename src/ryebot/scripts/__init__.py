@@ -1,6 +1,6 @@
 from importlib import import_module
 
-_scriptnames = ["langsync", "testscript"]
+_scriptnames = ["excludata", "langsync", "testscript"]
 
 scriptfunctions = dict(zip(
     _scriptnames,
