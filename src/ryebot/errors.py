@@ -23,6 +23,11 @@ class WrongWikiError(Exception):
         )
 
 
+class ScriptRuntimeError(RuntimeError):
+    """To be raised from within the exceution of a script."""
+    pass
+
+
 class NonexistentScriptConfigPageError(Exception):
     def __init__(self, scriptname: str, pagename: str):
         self.scriptname = scriptname

@@ -9,7 +9,7 @@ import sys
 from ryebot.bot import Bot
 from ryebot.core import ryebot_core
 from ryebot.scripts import scriptfunctions
-from ryebot.errors import WrongUserError, WrongWikiError
+from ryebot.errors import ScriptRuntimeError, WrongUserError, WrongWikiError
 
 
 # "root" logger for all logging in this package
@@ -36,6 +36,8 @@ def main():
     if not Bot.is_on_github_actions:
         try:
             ryebot_core()
+        except ScriptRuntimeError:
+            pass
         except Exception:
             logger.exception('')
         else:
@@ -124,6 +126,9 @@ def main_for_github_actions():
             f.write(f"### Login failed!\n")
             f.write(str(e))
         logger.exception('')
+        sys.exit(1)  # explicitly fail
+    except ScriptRuntimeError:
+        write_summary()
         sys.exit(1)  # explicitly fail
     except Exception as exc:
         logger.exception(str(exc))
