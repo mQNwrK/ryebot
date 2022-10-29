@@ -74,9 +74,10 @@ def main_for_github_actions():
                 if record.exc_info:
                     # print the traceback and the exception name and details
                     logger.exception(record.msg)
-            return (
-                f"::{outputtype}" + ('' if head is None else f" title={head}")
-                + "::" + (body or record.msg)
+            return "::{}{}::{}".format(
+                outputtype,
+                '' if head is None else f" title={head}",
+                body or record.msg
             )
 
     for handler in reversed(ryebotLogger.handlers):
