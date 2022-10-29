@@ -45,10 +45,10 @@ def main():
     else:
         # we need a bit of preparation if we're running on GitHub Actions ("GH").
         # `ryebot_core` is called in here, with the GH-specific wrapping.
-        main_for_github_actions()
+        main_for_github_actions(log_debug=args.verbose)
 
 
-def main_for_github_actions():
+def main_for_github_actions(log_debug: bool = False):
     """Run `ryebot_core`, wrapped in the stuff for GitHub Actions."""
     workflow_summary_filename = os.getenv("GITHUB_STEP_SUMMARY")
     workflow_run_id = os.getenv("GITHUB_RUN_ID")
@@ -84,6 +84,7 @@ def main_for_github_actions():
         ryebotLogger.removeHandler(handler)
 
     handler = logging.StreamHandler()
+    handler.setLevel(logging.DEBUG if log_debug else logging.INFO)
     handler.setFormatter(CustomFormatter())
     ryebotLogger.addHandler(handler)
 
