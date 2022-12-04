@@ -1,6 +1,12 @@
 from importlib import import_module
 
-_scriptnames = ["excludata", "langinfodata", "langsync", "testscript"]
+_scriptnames = [
+    "excludata",
+    "langinfodata",
+    "langsync",
+    "testscript",
+    "update_mapviewer_versions"
+]
 
 scriptfunctions = dict(zip(
     _scriptnames,
