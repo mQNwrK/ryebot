@@ -5,6 +5,7 @@ _scriptnames = [
     "langinfodata",
     "langsync",
     "testscript",
+    "update_iteminfo",
     "update_mapviewer_versions"
 ]
 
