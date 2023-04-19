@@ -1,3 +1,4 @@
+from importlib import metadata
 import logging
 
 from custom_mwclient import WikiAuth, WikiggClient
@@ -7,6 +8,11 @@ from ryebot.errors import WrongUserError, WrongWikiError
 
 logger = logging.getLogger(__name__)
 
+USER_AGENT = (
+    f'ryebot/{metadata.version(__package__)} (https://github.com/mQNwrK/ryebot; '
+    'https://terraria.wiki.gg/wiki/User_talk:Ryebot)'
+)
+
 
 def login(lang: str = "en"):
     """Login to wiki and return the `WikiClient` object."""
@@ -14,7 +20,7 @@ def login(lang: str = "en"):
     logger.info(f'Logging in to wiki "{targetwiki}"...')
 
     wiki_auth = WikiAuth.from_env("RYEBOT_USERNAME", "RYEBOT_PASSWORD")
-    site = WikiggClient("terraria", lang=lang, credentials=wiki_auth)  # this is the actual login
+    site = WikiggClient("terraria", lang=lang, credentials=wiki_auth, clients_useragent=USER_AGENT)  # this is the actual login
 
     # --- validate wikiname post-login ---
     wiki_id = site.get_current_wiki_name()
