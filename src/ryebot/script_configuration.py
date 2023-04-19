@@ -78,7 +78,7 @@ class ScriptConfiguration(MutableMapping):
             param_value = p.value.strip_code()
             # attempt to convert to Boolean
             if param_value.lower() in ("true", "false"):
-                cfg_value = True if param_value.lower() == "true" else False
+                cfg_value = param_value.lower() == "true"
             # attempt to convert to int or float
             else:
                 try:
