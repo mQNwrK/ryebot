@@ -28,6 +28,12 @@ python3 -m ryebot [-v] [-g] [--dryrun] SCRIPT
 
 The mandatory argument `SCRIPT` is the name of one of the [available scripts](src/ryebot/scripts) that is to be executed by Ryebot.
 
+Display a brief help text with a list of all available scripts via the following command:
+
+```
+python3 -m ryebot --help
+```
+
 ### Login
 
 Ryebot needs to login to the wiki. It requires a "bot password" for this (which can be created for any account, not just designated bot accounts). This can be created at `Special:BotPasswords` of the wiki that Ryebot will run on.
