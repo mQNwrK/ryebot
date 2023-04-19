@@ -15,4 +15,7 @@ def ryebot_core():
         Bot.script_output = ''
         scriptfunctions[Bot.scriptname_to_run]()
     else:
-        raise RuntimeError(f'unknown script name "{Bot.scriptname_to_run}"')
+        raise RuntimeError(
+            f'unknown script name "{Bot.scriptname_to_run}"; see "python3 -m '
+            'ryebot --help"'
+        )
