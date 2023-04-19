@@ -24,7 +24,7 @@ class WrongWikiError(Exception):
 
 
 class ScriptRuntimeError(RuntimeError):
-    """To be raised from within the exceution of a script."""
+    """To be raised from within the execution of a script."""
     pass
 
 

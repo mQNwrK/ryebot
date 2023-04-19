@@ -17,7 +17,7 @@ class Stopwatch():
     """
 
     def __init__(self, start_now: bool = True):
-        """Create a new stopwatch that immediately starts running, unless `start_now` is `True`."""
+        """Create a new stopwatch that immediately starts running, unless `start_now` is `False`."""
         self._start_time: datetime = None
         self.time: timedelta = None
         if start_now:
