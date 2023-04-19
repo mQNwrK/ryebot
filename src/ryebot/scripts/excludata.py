@@ -13,7 +13,7 @@ logger = logging.getLogger(__name__)
 def script_main():
     logger.info("Started excludata.")
 
-    summary = Bot.summary("[[:en:User:Ryebot/bot/scripts/excludatac|Updated]].")
+    summary = Bot.summary("[[User:Ryebot/bot/scripts/excludatac|Updated]].")
     data_template_name = "Template:Exclusive/luadata"
     target_module_name = "Module:Exclusive/data"
 
