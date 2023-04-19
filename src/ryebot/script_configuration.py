@@ -21,6 +21,8 @@ class ScriptConfiguration(MutableMapping):
     {"foo": 2, "bar": False, "baz": 10.5}
     >>> cfg.is_default()
     False
+    >>> list(cfg.items())
+    [("foo", 2), ("bar", False), ("baz", 10.5)]
     """
 
     def __init__(self, scriptname: str, default_config: dict = {}):
