@@ -17,16 +17,12 @@ def script_main():
 
     lower_itemid = 0  # item ID to start at
     number_of_items_per_chunk = 100
-    start_time = time.gmtime()
+
+    # terraria version and generation timestamp
+    module_data_code = _parse_wikitext('{{#invoke:Iteminfo/datagen|genMeta}}') + '\n'
 
     # pure data code
-    module_data_code = _make_data(lower_itemid, number_of_items_per_chunk)
-
-    # add version and timestamp
-    module_data_code = (
-        f"\n['_terrariaversion'] = '{_parse_wikitext('{{#invoke:Iteminfo/datagen|v}}')}',\n"
-        f"['_generated'] = '{time.strftime('%Y-%m-%d %H:%M:%S', start_time)} (+00:00)',\n\n"
-    ) + module_data_code + '\n\n'
+    module_data_code += _make_data(lower_itemid, number_of_items_per_chunk) + '\n\n'
 
     module_page = _get_page_safely(target_module_name)
     head, body, foot = _get_existing_module_text_parts(module_page)
