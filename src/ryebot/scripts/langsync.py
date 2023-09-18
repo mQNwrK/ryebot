@@ -3,8 +3,10 @@ import logging
 
 from mwclient.errors import InvalidPageTitle, ProtectedPageError
 from mwclient.page import Page
+from requests.exceptions import HTTPError
 
 from ryebot.bot import Bot
+from ryebot.errors import ScriptRuntimeError
 from ryebot.login import login
 from ryebot.script_configuration import ScriptConfiguration
 from ryebot.stopwatch import Stopwatch
@@ -302,6 +304,29 @@ def _get_one_page(pagetitle: str):
     except InvalidPageTitle:
         logger.info(f'Skipped invalid page title "{pagetitle}".')
         return
+    except HTTPError as exc:
+        # Since some point between 2023-08-21 and 2023-09-15, the Cloudflare in
+        # front of wiki.gg's servers issues a "challenge" (a CAPTCHA meant to
+        # be solved by a human) along with an "Error 429: Too Many Requests"
+        # after about 60 pages have been fetched.
+        # https://developers.cloudflare.com/firewall/cf-firewall-rules/cloudflare-challenges/#detecting-a-challenge-page-response
+        if exc.response.status_code == 429:
+            logger.info(f'While fetching page "{pagetitle}": {exc}')
+            headers = exc.response.headers
+            if "cf-mitigated" in headers and headers["cf-mitigated"] == "challenge":
+                errorstr = f'Cloudflare "challenge" while fetching page "{pagetitle}"!'
+                logger.error(
+                    errorstr,
+                    extra = {
+                        "head": "Made too many requests to the server",
+                        "body": (
+                            "The bot was stopped by Cloudflare. You can restart "
+                            "it, though that will probably not change anything. "
+                            "A greater delay will need to be implemented."
+                        )
+                    }
+                )
+                raise ScriptRuntimeError(errorstr)
     else:
         if page.exists:
             return page
