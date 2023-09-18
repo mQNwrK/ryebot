@@ -1,5 +1,6 @@
 import math
 import logging
+import time
 
 from mwclient.errors import InvalidPageTitle, ProtectedPageError
 from mwclient.page import Page
@@ -20,6 +21,8 @@ DEFAULT_CONFIG = {
     "categories": "",
     "pages": "Module:Exclusive/data"
 }
+
+CLOUDFLARE_SAFETY_DELAY: float = 20  # in seconds
 
 
 def script_main():
@@ -54,6 +57,8 @@ def script_main():
         for pagename in syncnot_from_config:
             try:
                 syncnot_page = Bot.site.pages[pagename]
+                logger.debug(f"Sleeping to avoid Cloudflare challenge: {CLOUDFLARE_SAFETY_DELAY} sec")
+                time.sleep(CLOUDFLARE_SAFETY_DELAY)
             except InvalidPageTitle:
                 continue
             for page in pages[wiki]:
@@ -65,6 +70,8 @@ def script_main():
         syncalso_from_config = list(str_to_set(config.get(f'{wiki}:syncalso', ''), ';'))
         for pagename in syncalso_from_config:
             page = _get_one_page(pagename)
+            logger.debug(f"Sleeping to avoid Cloudflare challenge: {CLOUDFLARE_SAFETY_DELAY} sec")
+            time.sleep(CLOUDFLARE_SAFETY_DELAY)
             if page and page.name not in [p.name for p in pages[wiki]]:
                 pages[wiki].append(page)
 
@@ -125,6 +132,8 @@ def script_main():
                     }
                 )
                 continue
+            logger.debug(f"Sleeping to avoid Cloudflare challenge: {CLOUDFLARE_SAFETY_DELAY} sec")
+            time.sleep(CLOUDFLARE_SAFETY_DELAY)
             didntsave_text = f'Did not sync "{wiki}:{targetpage.name}"'
 
             # read the English page text
@@ -294,6 +303,8 @@ def _get_pages_from_category_cfg(categories_from_config: str):
             + str([p.name for p in category.members()])
         )
         all_category_members.extend(category_members)
+        logger.debug(f"Sleeping to avoid Cloudflare challenge: {CLOUDFLARE_SAFETY_DELAY} sec")
+        time.sleep(CLOUDFLARE_SAFETY_DELAY)
     return all_category_members
 
 
@@ -346,6 +357,8 @@ def _get_pages_from_page_cfg(pages_from_config: str):
     logger.debug(f"Fetching {len(pages_from_config)} pages from config...")
     for pagename in pages_from_config:
         page = _get_one_page(pagename)
+        logger.debug(f"Sleeping to avoid Cloudflare challenge: {CLOUDFLARE_SAFETY_DELAY} sec")
+        time.sleep(CLOUDFLARE_SAFETY_DELAY)
         if page:
             yield page
 
