@@ -14,7 +14,7 @@ logger = logging.getLogger(__name__)
 SCSS_DIR = Path('csscompile/scss')  # input from wiki
 CSS_DIR = Path('csscompile/css')  # intermediate
 OUTPUT_DIR = Path('csscompile/output')  # output for wiki
-SASS_PROGRAM = 'sass'  # path to SASS binary
+SASS_PROGRAM = 'dart-sass/sass'  # path to Sass binary
 
 
 def script_main():
@@ -84,7 +84,7 @@ def _compile():
     """Compile the local SCSS files to CSS."""
     CSS_DIR.mkdir(parents=True)
 
-    # there's also a Python library for SASS compilation, `libsass`, but it seems
+    # there's also a Python library for Sass compilation, `libsass`, but it seems
     # to break on `@include lib.pseudo-block;` (specifically the period after
     # `lib`), so we have to resort to invoking the external program
     try:
