@@ -1,6 +1,7 @@
 from importlib import import_module
 
 _scriptnames = [
+    "csscompile",
     "excludata",
     "langinfodata",
     "langsync",
