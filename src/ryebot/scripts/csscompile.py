@@ -142,12 +142,15 @@ def _postprocess():
 
 def _directive_import(text: str):
     """Replace: `/* @import filename */` --> `(contents of the file)`"""
-    pattern = r'^[ \t]*/\*\s*@import +(.+?)\s*\*/'
+    pattern = r'^(?P<indent>[ \t]*)/\*\s*@import +(?P<filename>.+?)\s*\*/'
 
     def _replacement(match: re.Match):
-        with open(CSS_DIR / match.group(1)) as f:  # group(1) is the filename
-            text = f.read()  # read and close the file first...
-        return _directive_import(text)  # ...then perform the recursive replacement
+        # read and close the file first, then perform the recursive replacement
+        with open(CSS_DIR / match.group('filename')) as f:
+            text = f.read()
+        # inherit the indentation of @import
+        text = re.sub('^', match.group('indent'), text, flags=re.M)
+        return _directive_import(text)
 
     return re.sub(pattern, _replacement, text, flags=re.M|re.I)
 
