@@ -30,7 +30,7 @@ DEFAULT_CONFIG = {
 # be solved by a human) along with an "Error 429: Too Many Requests"
 # after about 60 requests have been made in rapid succession.
 # https://developers.cloudflare.com/firewall/cf-firewall-rules/cloudflare-challenges/#detecting-a-challenge-page-response
-CLOUDFLARE_SAFETY_DELAY: float = 20  # in seconds
+CLOUDFLARE_SAFETY_DELAY: float = 15  # in seconds
 
 
 def script_main():
