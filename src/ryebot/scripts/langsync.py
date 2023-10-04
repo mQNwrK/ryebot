@@ -3,6 +3,7 @@ import math
 import logging
 import time
 
+from custom_mwclient import WikiClient
 from mwclient.errors import InvalidPageTitle, ProtectedPageError
 from mwclient.page import Page
 from requests.exceptions import HTTPError
@@ -93,17 +94,34 @@ def script_main():
         logger.info('+' * 40 + ' ' + wiki.upper())
         site = login(wiki)
         Bot.other_sites[wiki] = site
+
+        titles_lang = [p['title_lang'] for p in pages[wiki].values()]
+        normalized_titles = _normalize_page_titles(titles_lang, site)
+
+        # fetch the texts of the pages on this wiki
+        langpages_info = _get_info_for_titles(titles_lang, site)
+        for pageid, pagedata in pages[wiki].items():
+            normalized_title = normalized_titles[pagedata['title_lang']]
+            pagedata['title_lang_normalized'] = normalized_title.get('title', pagedata['title_lang'])
+            langpage_info = langpages_info.get(normalized_title.get('id'))
+            if langpage_info:
+                pagedata['text_lang'] = langpage_info['text']
+            pagedata['needs_sync'] = pagedata['text'] != pagedata.get('text_lang')
+
         total = len(pages[wiki])
         w = math.ceil(math.log10(total))  # greatest number of digits, for formatting
 
         for i, pageid in enumerate(pageorders[wiki]):
             page = pages[wiki][pageid]
             sourcepage_name = page['title_en']
-            targetpage_name = page['title_lang']
-            targetpage_log = sourcepage_name
+            targetpage_name = page['title_lang_normalized']
+            targetpage_for_log = sourcepage_name
             if targetpage_name != sourcepage_name:
-                targetpage_log += f" -> {targetpage_name}"
-            logger.info(f"{i+1: {w}}/{total}: {targetpage_log}")
+                targetpage_for_log += f" -> {targetpage_name}"
+            logger.info(f"{i+1: {w}}/{total}: {targetpage_for_log}")
+
+            if not pages[wiki][pageid]['needs_sync']:
+                continue
 
             summary = Bot.summary(
                 f"[[:en:User:Ryebot/bot/scripts/langsync|sync]] :: en "
@@ -341,7 +359,7 @@ def _get_pages_from_page_cfg(pages_from_config: str):
     return _get_info_for_titles(list(pages_from_config))
 
 
-def _get_info_for_titles(pagetitles: 'list[str]'):
+def _get_info_for_titles(pagetitles: 'list[str]', site: WikiClient = ''):
     """Return page content and revision ID for each page in the `pagetitles`.
 
     Return a dict where the key is the page's ID and the value is another dict
@@ -358,6 +376,8 @@ def _get_info_for_titles(pagetitles: 'list[str]'):
     }
     """
 
+    site = site or Bot.site
+
     raw_pageinfo = {}
 
     for titles_slice in chunked(pagetitles):
@@ -370,7 +390,7 @@ def _get_info_for_titles(pagetitles: 'list[str]'):
         }
 
         while True:
-            api_result = Bot.site.api('query', **api_parameters)
+            api_result = site.api('query', **api_parameters)
             api_result_pagelist: dict = api_result.get('query', {}).get('pages', {})
             # merge the data for each page with the existing data.
             # this is necessary because it seems we don't receive every attribute
@@ -409,6 +429,44 @@ def _pagetitles_to_ids(titles: 'list[str]'):
         for pageid in api_result_pagelist.keys():
             if int(pageid) > 0:
                 yield pageid
+
+
+def _normalize_page_titles(titles: 'list[str]', site: WikiClient = None):
+    """Normalize all the `titles`.
+
+    Return a dict where each `title` has a dict with page ID and normalized title.
+    Missing pages and invalid titles will have an empty dict.
+
+    >>> _normalize_page_titles(['Template:Yes', 'nonexistentpage'], <DEwiki>)
+    {
+        'Template:Yes': {
+            'id': 12345,
+            'title': 'Vorlage:Yes'
+        },
+        'nonexistentpage': {}
+    }
+    """
+
+    site = site or Bot.site
+
+    pagetitles_to_ids = dict.fromkeys(titles, {})
+    for titles_slice in chunked(titles):
+        api_result = site.post('query', titles='|'.join(titles_slice))
+        # convert the "normalized" list from the API response.
+        # original format: [ {'from': 'foo', 'to': 'Foo' } ]
+        # target format: {'Foo': 'foo'}
+        normalized = api_result['query'].get('normalized', [])
+        normalized = dict([reversed(norm.values()) for norm in normalized])
+        api_result_pagelist: dict = api_result['query']['pages']
+        for pageid, pagedata in api_result_pagelist.items():
+            if int(pageid) > 0:
+                pagetitle = pagedata['title']
+                original_title = normalized.get(pagetitle, pagetitle)
+                pagetitles_to_ids[original_title] = {
+                    'id': pageid,
+                    'title': pagetitle
+                }
+    return pagetitles_to_ids
 
 
 def chunked(list_to_chunk, limit_low: int = 50, limit_high = 500):
