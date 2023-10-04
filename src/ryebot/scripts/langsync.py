@@ -314,7 +314,7 @@ def _get_info_for_categorymembers(categorynames: 'list[str]'):
         api_parameters = {
             'generator': 'categorymembers',
             'gcmtitle': categoryname,
-            'gcmtype': 'page|file',  # do not include subcategories
+            'gcmtype': 'page',  # do not include files nor subcategories
             'gcmlimit': 'max',
             'prop': 'revisions',
             'rvslots': 'main',
