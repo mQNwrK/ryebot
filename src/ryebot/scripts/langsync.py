@@ -1,3 +1,4 @@
+import copy
 import math
 import logging
 import time
@@ -22,6 +23,12 @@ DEFAULT_CONFIG = {
     "pages": "Module:Exclusive/data"
 }
 
+
+# Since some point between 2023-08-21 and 2023-09-15, the Cloudflare in
+# front of wiki.gg's servers issues a "challenge" (a CAPTCHA meant to
+# be solved by a human) along with an "Error 429: Too Many Requests"
+# after about 60 requests have been made in rapid succession.
+# https://developers.cloudflare.com/firewall/cf-firewall-rules/cloudflare-challenges/#detecting-a-challenge-page-response
 CLOUDFLARE_SAFETY_DELAY: float = 20  # in seconds
 
 
@@ -42,52 +49,38 @@ def script_main():
     pages_base = _get_pages_from_category_cfg(config["categories"])
 
     # get pages from page config
-    pages_base += list(_get_pages_from_page_cfg(config["pages"]))
+    pages_base |= _get_pages_from_page_cfg(config["pages"])
 
-    logger.info(f"Pages to sync (base): {sorted(p.name for p in pages_base)}")
+    pagenames_for_log = [pages_base[pageid]['title_en'] for pageid in pages_base.keys()]
+    logger.info(f"Pages to sync (base): {sorted(pagenames_for_log)}")
 
-    # handle language-specific cfg
-    pages: dict[str, list[Page]] = {}
-    targetpages: dict[str, dict[str, str]] = {}
+    # handle language-specific config
+    pages: dict[str, dict[str, dict]] = {}  # key: wiki language, value: page dicts
+    pageorders: dict[str, list[str]] = {}  # key: wiki language, value: page IDs
     for wiki in wikis:
-        pages[wiki] = pages_base.copy()
+        pages[wiki] = copy.deepcopy(pages_base)
 
         # syncnot
         syncnot_from_config = list(str_to_set(config.get(f'{wiki}:syncnot', ''), ';'))
-        for pagename in syncnot_from_config:
-            try:
-                syncnot_page = Bot.site.pages[pagename]
-                logger.debug(f"Sleeping to avoid Cloudflare challenge: {CLOUDFLARE_SAFETY_DELAY} sec")
-                time.sleep(CLOUDFLARE_SAFETY_DELAY)
-            except InvalidPageTitle:
-                continue
-            for page in pages[wiki]:
-                if page.name == syncnot_page.name:
-                    pages[wiki].remove(page)
-                    break
+        syncnot_pageids = set(_pagetitles_to_ids(syncnot_from_config))
+        current_pageids = set(pages[wiki].keys())
+        for pageid_to_remove in current_pageids & syncnot_pageids:
+            del pages[wiki][pageid_to_remove]
 
         # syncalso
         syncalso_from_config = list(str_to_set(config.get(f'{wiki}:syncalso', ''), ';'))
-        for pagename in syncalso_from_config:
-            page = _get_one_page(pagename)
-            logger.debug(f"Sleeping to avoid Cloudflare challenge: {CLOUDFLARE_SAFETY_DELAY} sec")
-            time.sleep(CLOUDFLARE_SAFETY_DELAY)
-            if page and page.name not in [p.name for p in pages[wiki]]:
-                pages[wiki].append(page)
+        pages[wiki] |= _get_info_for_titles(syncalso_from_config)
 
         # lang targetpages
-        targetpages[wiki] = dict([
-            (p.name, config.get(f'{wiki}:{p.name}', p.name))  # default to EN name if config not set
-            for p in pages[wiki]
-        ])
+        for pageid, pageinfo in pages[wiki].items():
+            # default to EN if the targetpage is not set in the config
+            pageinfo['title_lang'] = config.get(f'{wiki}:{pageinfo["title_en"]}', pageinfo["title_en"])
 
-        pages[wiki] = sorted(pages[wiki], key=lambda p: p.name)
-        logger.info(
-            f"Pages to sync ({wiki}) ({len(pages[wiki])}): "
-            f"{[p.name for p in pages[wiki]]}"
-        )
+        pageorders[wiki] = sorted(pages[wiki].keys(), key=lambda pageid: pages[wiki][pageid]['title_en'])
+        pagenames_for_log = [pages[wiki][pageid]['title_en'] for pageid in pageorders[wiki]]
+        logger.info(f"Pages to sync ({wiki}) ({len(pages[wiki])}): {pagenames_for_log}")
 
-    if not pages:
+    if sum([len(wiki) for wiki in pages.values()]) == 0:
         logger.info(
             "Didn't retrieve any information about pages to sync. Terminated "
             "with no changes."
@@ -100,20 +93,21 @@ def script_main():
         logger.info('+' * 40 + ' ' + wiki.upper())
         site = login(wiki)
         Bot.other_sites[wiki] = site
-        pages_to_sync = pages[wiki]
-        total = len(pages_to_sync)
+        total = len(pages[wiki])
         w = math.ceil(math.log10(total))  # greatest number of digits, for formatting
 
-        for i, page in enumerate(pages_to_sync):
-            targetpage_name = targetpages[wiki][page.name]
-            targetpage_log = page.name
-            if targetpage_name != page.name:
+        for i, pageid in enumerate(pageorders[wiki]):
+            page = pages[wiki][pageid]
+            sourcepage_name = page['title_en']
+            targetpage_name = page['title_lang']
+            targetpage_log = sourcepage_name
+            if targetpage_name != sourcepage_name:
                 targetpage_log += f" -> {targetpage_name}"
             logger.info(f"{i+1: {w}}/{total}: {targetpage_log}")
 
             summary = Bot.summary(
                 f"[[:en:User:Ryebot/bot/scripts/langsync|sync]] :: en "
-                f"revid:{page.revision}::"
+                f"revid:{page['revid']}::"
             )
 
             # fetch the page from the target wiki
@@ -136,22 +130,7 @@ def script_main():
             time.sleep(CLOUDFLARE_SAFETY_DELAY)
             didntsave_text = f'Did not sync "{wiki}:{targetpage.name}"'
 
-            # read the English page text
-            try:
-                pagetext = page.text()
-            except Exception:
-                logger.exception(f'Error while reading text of "{page.name}" from EN:')
-                logger.warning(
-                    "Skipped page due to error.",
-                    extra = {
-                        "head": didntsave_text,
-                        "body": (
-                            f"Couldn't read the text of \"en:{page.name}\" "
-                            "due to some error; check the logs for details."
-                        )
-                    }
-                )
-                continue
+            pagetext = page['text']
 
             if Bot.dry_run:
                 chardiff = len(pagetext) - (targetpage.length or 0)
@@ -254,7 +233,8 @@ def _validate_wikis_from_config(wikis_from_config: str) -> list[str]:
     valid_wikis = {"de", "fr", "hu", "ko", "ru", "pl", "pt", "uk", "zh"}
     is_hardcoded = False
     try:
-        valid_wikis = Bot.site.expandtemplates('{{langList|offWiki}}')
+        api_result = Bot.site.get('expandtemplates', text='{{langList|offWiki}}', prop='wikitext')
+        valid_wikis = api_result['expandtemplates']['wikitext']
     except Exception:
         is_hardcoded = True
         logger.exception("Fetching the off-wiki list failed:")
@@ -281,86 +261,167 @@ def _validate_wikis_from_config(wikis_from_config: str) -> list[str]:
 
 
 def _get_pages_from_category_cfg(categories_from_config: str):
-    """Return `Page` objects for the pages in all categories defined in config."""
+    """Return data for all pages in all of the categories defined in config."""
     logger.debug("Raw categories string in config: " + categories_from_config)
     categories_from_config = str_to_set(categories_from_config, ';')
-    logger.debug(f"Categories from config parsed as list: {sorted(categories_from_config)}")
-
-    if len(categories_from_config) == 0:
-        return []
-
-    all_category_members = []
-    logger.debug(f"Fetching members of the following categories: {categories_from_config}...")
-    for categoryname in categories_from_config:
-        try:
-            category = Bot.site.categories[categoryname]
-        except InvalidPageTitle:
-            logger.info(f'Skipped invalid category title "{categoryname}".')
-            continue
-        category_members = list(category.members())
-        logger.debug(
-            f"Members of {category.name} ({len(category_members)}): "
-            + str([p.name for p in category.members()])
-        )
-        all_category_members.extend(category_members)
-        logger.debug(f"Sleeping to avoid Cloudflare challenge: {CLOUDFLARE_SAFETY_DELAY} sec")
-        time.sleep(CLOUDFLARE_SAFETY_DELAY)
-    return all_category_members
+    logger.debug(
+        f"Categories from config parsed as list: ({len(categories_from_config)}) "
+        f"{sorted(categories_from_config)}"
+    )
+    return _get_info_for_categorymembers(categories_from_config)
 
 
-def _get_one_page(pagetitle: str):
-    """Return a `Page` object, doing logging if impossible."""
-    try:
-        page = Bot.site.pages[pagetitle]
-    except InvalidPageTitle:
-        logger.info(f'Skipped invalid page title "{pagetitle}".')
-        return
-    except HTTPError as exc:
-        # Since some point between 2023-08-21 and 2023-09-15, the Cloudflare in
-        # front of wiki.gg's servers issues a "challenge" (a CAPTCHA meant to
-        # be solved by a human) along with an "Error 429: Too Many Requests"
-        # after about 60 pages have been fetched.
-        # https://developers.cloudflare.com/firewall/cf-firewall-rules/cloudflare-challenges/#detecting-a-challenge-page-response
-        if exc.response.status_code == 429:
-            logger.info(f'While fetching page "{pagetitle}": {exc}')
-            headers = exc.response.headers
-            if "cf-mitigated" in headers and headers["cf-mitigated"] == "challenge":
-                errorstr = f'Cloudflare "challenge" while fetching page "{pagetitle}"!'
-                logger.error(
-                    errorstr,
-                    extra = {
-                        "head": "Made too many requests to the server",
-                        "body": (
-                            "The bot was stopped by Cloudflare. You can restart "
-                            "it, though that will probably not change anything. "
-                            "A greater delay will need to be implemented."
-                        )
-                    }
-                )
-                raise ScriptRuntimeError(errorstr)
-    else:
-        if page.exists:
-            return page
-        else:
-            logger.info(f'Skipped non-existent page "{pagetitle}".')
+def _get_info_for_categorymembers(categorynames: 'list[str]'):
+    """Return page content and revision ID for each member of each category.
+
+    Return a dict where the key is the page's ID and the value is another dict
+    with the page name (normalized), current text content, and current revision ID.
+    Ignore non-existent pages and invalid titles.
+
+    >>> _get_info_for_titles(['Category:Terraria Wiki'])
+    {
+        '1': {
+            'title_en': 'Main Page',
+            'text': 'Lorem ipsum',
+            'revid': '987654'
+        }
+    }
+    """
+
+    raw_pageinfo = {}
+
+    for categoryname in categorynames:
+
+        api_parameters = {
+            'generator': 'categorymembers',
+            'gcmtitle': categoryname,
+            'gcmtype': 'page|file',  # do not include subcategories
+            'gcmlimit': 'max',
+            'prop': 'revisions',
+            'rvslots': 'main',
+            'rvprop': 'ids|content'
+        }
+
+        while True:
+            api_result = Bot.site.api('query', **api_parameters)
+            api_result_pagelist: dict = api_result.get('query', {}).get('pages', {})
+            # merge the data for each page with the existing data
+            # (this is necessary because it seems we don't receive every attribute
+            # in one query; e.g. in some queries we only get the page's revison ID
+            # but not its content)
+            for pageid, pagedata in api_result_pagelist.items():
+                raw_pageinfo.setdefault(pageid, {})  # ensure the key for this page exists
+                raw_pageinfo[pageid].update(pagedata)  # merge
+
+            if api_result.get('continue') is None:
+                # no need to continue, we're done with this batch
+                break
+            # add the 'rvcontinue' and 'continue' keys to the query for the next batch
+            api_parameters.update(api_result.get('continue'))
+
+    page_texts_and_ids = {}
+    for pagedata in raw_pageinfo.values():
+        page_texts_and_ids[str(pagedata['pageid'])] = {
+            'title_en': pagedata['title'],
+            'text': pagedata['revisions'][0]['slots']['main']['*'],
+            'revid': pagedata['revisions'][0]['revid']
+        }
+
+    return page_texts_and_ids
 
 
 def _get_pages_from_page_cfg(pages_from_config: str):
-    """Return `Page` objects for all pages defined in config, skipping non-existent ones."""
+    """Return page info for all pages defined in config, skipping non-existent ones."""
     logger.debug("Raw pages string in config: " + pages_from_config)
     pages_from_config = str_to_set(pages_from_config, ';')
-    logger.debug(f"Pages from config parsed as list: {sorted(pages_from_config)}")
+    logger.debug(
+        f"Pages from config parsed as list: ({len(pages_from_config)}) "
+        f"{sorted(pages_from_config)}"
+    )
+    return _get_info_for_titles(list(pages_from_config))
 
-    if len(pages_from_config) == 0:
-        return []
 
-    logger.debug(f"Fetching {len(pages_from_config)} pages from config...")
-    for pagename in pages_from_config:
-        page = _get_one_page(pagename)
-        logger.debug(f"Sleeping to avoid Cloudflare challenge: {CLOUDFLARE_SAFETY_DELAY} sec")
-        time.sleep(CLOUDFLARE_SAFETY_DELAY)
-        if page:
-            yield page
+def _get_info_for_titles(pagetitles: 'list[str]'):
+    """Return page content and revision ID for each page in the `pagetitles`.
+
+    Return a dict where the key is the page's ID and the value is another dict
+    with the page name (normalized), current text content, and current revision ID.
+    Ignore non-existent pages and invalid titles.
+
+    >>> _get_info_for_titles(['project:foo'])
+    {
+        '123': {
+            'title_en': 'Terraria Wiki:Foo',
+            'text': 'Lorem ipsum',
+            'revid': '987654'
+        }
+    }
+    """
+
+    raw_pageinfo = {}
+
+    for titles_slice in chunked(pagetitles):
+
+        api_parameters = {
+            'titles': '|'.join(titles_slice),
+            'prop': 'revisions',
+            'rvslots': 'main',
+            'rvprop': 'ids|content'
+        }
+
+        while True:
+            api_result = Bot.site.api('query', **api_parameters)
+            api_result_pagelist: dict = api_result.get('query', {}).get('pages', {})
+            # merge the data for each page with the existing data.
+            # this is necessary because it seems we don't receive every attribute
+            # in one query; e.g. in some queries we only get the page's revison ID
+            # but not its content.
+            # when that is the case, the following warning is emitted: "This
+            # result was truncated because it would otherwise be larger than the
+            # limit of 8,388,608 bytes.")
+            for pageid, pagedata in api_result_pagelist.items():
+                raw_pageinfo.setdefault(pageid, {})  # ensure the key for this page exists
+                raw_pageinfo[pageid].update(pagedata)  # merge
+
+            if api_result.get('continue') is None:
+                # no need to continue, we're done with this batch
+                break
+            # add the 'rvcontinue' and 'continue' keys to the query for the next batch
+            api_parameters.update(api_result.get('continue'))
+
+    page_texts_and_ids = {}
+    for pageid, pagedata in raw_pageinfo.items():
+        if int(pageid) > 0:
+            page_texts_and_ids[str(pagedata['pageid'])] = {
+                'title_en': pagedata['title'],
+                'text': pagedata['revisions'][0]['slots']['main']['*'],
+                'revid': pagedata['revisions'][0]['revid']
+            }
+
+    return page_texts_and_ids
+
+
+def _pagetitles_to_ids(titles: 'list[str]'):
+    """Return the page IDs of the `titles` and disregard missing pages and invalid titles."""
+    for titles_slice in chunked(titles):
+        api_result = Bot.site.post('query', titles='|'.join(titles_slice))
+        api_result_pagelist: dict = api_result['query']['pages']
+        for pageid in api_result_pagelist.keys():
+            if int(pageid) > 0:
+                yield pageid
+
+
+def chunked(list_to_chunk, limit_low: int = 50, limit_high = 500):
+    """Split the list into equal-sized chunks (sub-lists).
+
+    The size of the chunks (`limit_low` or `limit_high`) depends on the
+    `apihighlimits` user right of the current user. The chunks are returned as a
+    generator.
+    """
+
+    limit = limit_high if 'apihighlimits' in Bot.site.rights else limit_low
+    for slicestart in range(0, len(list_to_chunk), limit):
+        yield list_to_chunk[slicestart:slicestart+limit]
 
 
 def str_to_set(input_str: str, delimiter: str = ','):
