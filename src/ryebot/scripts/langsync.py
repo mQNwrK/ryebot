@@ -189,7 +189,8 @@ def script_main():
                         f'Saved page "{targetpage.name}" with summary "{summary}". '
                         f"Diff ID: {saveresult.get('newrevid')}. Time: {stopwatch}"
                     )
-                    saveresults.setdefault(wiki, []).append((page.name, saveresult, stopwatch))
+                    saveresult_tuple = (sourcepage_name, saveresult, stopwatch)
+                    saveresults.setdefault(wiki, []).append(saveresult_tuple)
 
     logger.info("Completed syncing to all wikis.")
     Bot.script_output = format_saveresults(saveresults)
