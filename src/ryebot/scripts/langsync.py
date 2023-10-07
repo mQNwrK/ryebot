@@ -161,6 +161,7 @@ def script_main():
                 )
             else:
                 stopwatch = Stopwatch()
+                saveresult = None
                 try:
                     saveresult = site.save(targetpage, pagetext, summary=summary, minor=True)
                 except ProtectedPageError:
@@ -247,7 +248,7 @@ def script_main():
                             )
                         }
                     )
-                else:
+                if saveresult is not None:
                     stopwatch.stop()
                     logger.info(
                         f'Saved page "{targetpage.name}" with summary "{summary}". '
