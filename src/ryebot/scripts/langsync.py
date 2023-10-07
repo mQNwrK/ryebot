@@ -4,7 +4,7 @@ import logging
 import time
 
 from custom_mwclient import WikiClient
-from mwclient.errors import InvalidPageTitle, ProtectedPageError
+from mwclient.errors import InvalidPageTitle, ProtectedPageError, APIError
 from mwclient.page import Page
 from requests.exceptions import HTTPError
 
@@ -171,6 +171,70 @@ def script_main():
                             "body": "Couldn't save the page because it is protected."
                         }
                     )
+                except APIError as error:
+                    logger.exception("Error while saving:")
+                    if (
+                        not targetpage.exists
+                        and targetpage.contentmodel == "Scribunto"
+                        and page["contentmodel"] == "wikitext"
+                        and error.code == "scribunto-lua-error-location"
+                    ):
+                        # targetpage is a non-existent "Module:" page but the
+                        # content is wikitext (most likely: documentation page
+                        # of a module), which this throws a Lua error.
+                        # retry the page creation with forcing the contentmodel
+                        # to wikitext.
+                        logger.info(
+                            'Re-trying to create this "Module:" page by forcing '
+                            'the content model to "wikitext".'
+                        )
+
+                        # restart the save timer
+                        stopwatch.stop()
+                        stopwatch.start()
+                        try:
+                            saveresult = site.save(targetpage, pagetext, summary=summary, minor=True, contentmodel="wikitext")
+                        except Exception:
+                            logger.exception("Error while saving:")
+                            logger.warning(
+                                "Skipped page due to error.",
+                                extra = {
+                                    "head": didntsave_text,
+                                    "body": (
+                                        "Couldn't save the page due to some error; "
+                                        "check the logs for details."
+                                    )
+                                }
+                            )
+                        else:
+                            logger.warning(
+                                (
+                                    f'Created "{wiki}:{targetpage.name}" with a '
+                                    'forced contentmodel of "wikitext".'
+                                ),
+                                extra = {
+                                    "head": f'Possibly created "{wiki}:{targetpage.name}" incorrectly',
+                                    "body": (
+                                        "Creating the page normally caused a Lua "
+                                        "error, so it was created with a forced "
+                                        'content model of "wikitext". This might '
+                                        'be wrong as the page is in the "Module:" '
+                                        "namespace. Please check it manually to "
+                                        "ensure everything is in order."
+                                    )
+                                }
+                            )
+                    else:
+                        logger.warning(
+                            "Skipped page due to error.",
+                            extra = {
+                                "head": didntsave_text,
+                                "body": (
+                                    "Couldn't save the page due to some error; "
+                                    "check the logs for details."
+                                )
+                            }
+                        )
                 except Exception:
                     logger.exception("Error while saving:")
                     logger.warning(
@@ -302,7 +366,8 @@ def _get_info_for_categorymembers(categorynames: 'list[str]'):
         '1': {
             'title_en': 'Main Page',
             'text': 'Lorem ipsum',
-            'revid': '987654'
+            'revid': '987654',
+            'contentmodel': 'wikitext'
         }
     }
     """
@@ -318,7 +383,7 @@ def _get_info_for_categorymembers(categorynames: 'list[str]'):
             'gcmlimit': 'max',
             'prop': 'revisions',
             'rvslots': 'main',
-            'rvprop': 'ids|content'
+            'rvprop': 'ids|content|contentmodel'
         }
 
         while True:
@@ -343,7 +408,8 @@ def _get_info_for_categorymembers(categorynames: 'list[str]'):
         page_texts_and_ids[str(pagedata['pageid'])] = {
             'title_en': pagedata['title'],
             'text': pagedata['revisions'][0]['slots']['main']['*'],
-            'revid': pagedata['revisions'][0]['revid']
+            'revid': pagedata['revisions'][0]['revid'],
+            'contentmodel': pagedata['revisions'][0]['slots']['main']['contentmodel']
         }
 
     return page_texts_and_ids
@@ -372,7 +438,8 @@ def _get_info_for_titles(pagetitles: 'list[str]', site: WikiClient = ''):
         '123': {
             'title_en': 'Terraria Wiki:Foo',
             'text': 'Lorem ipsum',
-            'revid': '987654'
+            'revid': '987654',
+            'contentmodel': 'wikitext'
         }
     }
     """
@@ -387,7 +454,7 @@ def _get_info_for_titles(pagetitles: 'list[str]', site: WikiClient = ''):
             'titles': '|'.join(titles_slice),
             'prop': 'revisions',
             'rvslots': 'main',
-            'rvprop': 'ids|content'
+            'rvprop': 'ids|content|contentmodel'
         }
 
         while True:
@@ -416,7 +483,8 @@ def _get_info_for_titles(pagetitles: 'list[str]', site: WikiClient = ''):
             page_texts_and_ids[str(pagedata['pageid'])] = {
                 'title_en': pagedata['title'],
                 'text': pagedata['revisions'][0]['slots']['main']['*'],
-                'revid': pagedata['revisions'][0]['revid']
+                'revid': pagedata['revisions'][0]['revid'],
+                'contentmodel': pagedata['revisions'][0]['slots']['main']['contentmodel']
             }
 
     return page_texts_and_ids
