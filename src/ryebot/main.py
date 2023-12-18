@@ -8,8 +8,8 @@ import sys
 
 from ryebot.bot import Bot
 from ryebot.core import ryebot_core
-from ryebot.scripts import scriptfunctions
 from ryebot.errors import ScriptRuntimeError, WrongUserError, WrongWikiError
+from ryebot.scripts import scriptfunctions
 
 
 # "root" logger for all logging in this package
@@ -25,9 +25,10 @@ def main():
     Bot.dry_run = args.dryrun
     Bot.is_on_github_actions = args.github
     setup_logging(debug_on_console=args.verbose)
+    ryebot_version = metadata.version(__package__)
     logger.info(
-        f"Started ryebot v{metadata.version(__package__)} main.py for "
-        f'script "{Bot.scriptname_to_run}".'
+        f"Started ryebot v{ryebot_version} main.py for script "
+        f'"{Bot.scriptname_to_run}".'
     )
     if Bot.dry_run:
         logger.info("Dry-run mode is active: No changes to any wiki pages will be made.")

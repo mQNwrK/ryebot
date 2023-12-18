@@ -62,14 +62,14 @@ def script_main():
         pages[wiki] = copy.deepcopy(pages_base)
 
         # syncnot
-        syncnot_from_config = list(str_to_set(config.get(f'{wiki}:syncnot', ''), ';'))
+        syncnot_from_config = list(_str_to_set(config.get(f'{wiki}:syncnot', ''), ';'))
         syncnot_pageids = set(_pagetitles_to_ids(syncnot_from_config))
         current_pageids = set(pages[wiki].keys())
         for pageid_to_remove in current_pageids & syncnot_pageids:
             del pages[wiki][pageid_to_remove]
 
         # syncalso
-        syncalso_from_config = list(str_to_set(config.get(f'{wiki}:syncalso', ''), ';'))
+        syncalso_from_config = list(_str_to_set(config.get(f'{wiki}:syncalso', ''), ';'))
         pages[wiki] |= _get_info_for_titles(syncalso_from_config)
 
         # lang targetpages
@@ -182,7 +182,7 @@ def script_main():
                     ):
                         # targetpage is a non-existent "Module:" page but the
                         # content is wikitext (most likely: documentation page
-                        # of a module), which this throws a Lua error.
+                        # of a module), which throws a Lua error.
                         # retry the page creation with forcing the contentmodel
                         # to wikitext.
                         logger.info(
@@ -311,7 +311,7 @@ def format_saveresults(saveresults: dict[str, list[tuple[str, dict, Stopwatch]]]
 
 def _validate_wikis_from_config(wikis_from_config: str) -> list[str]:
     logger.debug("Raw wikis string in config: " + wikis_from_config)
-    wikis_from_config = str_to_set(wikis_from_config)
+    wikis_from_config = _str_to_set(wikis_from_config)
     logger.debug(f"Wikis from config parsed as list: {sorted(wikis_from_config)}")
     # get dynamic if list if possible, this hardcoded list is the fallback
     valid_wikis = {"de", "fr", "hu", "ko", "ru", "pl", "pt", "uk", "zh"}
@@ -324,7 +324,7 @@ def _validate_wikis_from_config(wikis_from_config: str) -> list[str]:
         logger.exception("Fetching the off-wiki list failed:")
         logger.info("Using the potentially outdated hardcoded list.")
     else:
-        valid_wikis = str_to_set(valid_wikis)
+        valid_wikis = _str_to_set(valid_wikis)
     logger.debug("Valid wikis: " + str(sorted(valid_wikis)))
     if not wikis_from_config <= valid_wikis:
         dismissed = str(sorted(wikis_from_config - valid_wikis))
@@ -347,7 +347,7 @@ def _validate_wikis_from_config(wikis_from_config: str) -> list[str]:
 def _get_pages_from_category_cfg(categories_from_config: str):
     """Return data for all pages in all of the categories defined in config."""
     logger.debug("Raw categories string in config: " + categories_from_config)
-    categories_from_config = str_to_set(categories_from_config, ';')
+    categories_from_config = _str_to_set(categories_from_config, ';')
     logger.debug(
         f"Categories from config parsed as list: ({len(categories_from_config)}) "
         f"{sorted(categories_from_config)}"
@@ -419,7 +419,7 @@ def _get_info_for_categorymembers(categorynames: 'list[str]'):
 def _get_pages_from_page_cfg(pages_from_config: str):
     """Return page info for all pages defined in config, skipping non-existent ones."""
     logger.debug("Raw pages string in config: " + pages_from_config)
-    pages_from_config = str_to_set(pages_from_config, ';')
+    pages_from_config = _str_to_set(pages_from_config, ';')
     logger.debug(
         f"Pages from config parsed as list: ({len(pages_from_config)}) "
         f"{sorted(pages_from_config)}"
@@ -552,6 +552,11 @@ def chunked(list_to_chunk, limit_low: int = 50, limit_high = 500):
         yield list_to_chunk[slicestart:slicestart+limit]
 
 
-def str_to_set(input_str: str, delimiter: str = ','):
-    """Split the `input_str` into unique values, discarding empty ones."""
+def _str_to_set(input_str: str, delimiter: str = ','):
+    """Turn the `input_str` into a set.
+
+    Split the string (on `delimiter`) into unique values and strip leading and
+    leading whitespace from each one. Discard empty values.
+    """
+
     return set([s.strip() for s in input_str.split(delimiter)]) - {''}
