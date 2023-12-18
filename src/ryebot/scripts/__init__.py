@@ -3,6 +3,7 @@ from importlib import import_module
 _scriptnames = [
     "csscompile",
     "excludata",
+    "extensionupdates",
     "langinfodata",
     "langsync",
     "testscript",
