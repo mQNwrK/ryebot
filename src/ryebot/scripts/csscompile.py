@@ -2,6 +2,7 @@ import logging
 from pathlib import Path
 import re
 import subprocess
+import tempfile
 
 from ryebot.bot import Bot
 from ryebot.errors import ScriptRuntimeError
@@ -11,18 +12,28 @@ from ryebot.stopwatch import Stopwatch
 logger = logging.getLogger(__name__)
 
 
-SCSS_DIR = Path('csscompile/scss')  # input from wiki
-CSS_DIR = Path('csscompile/css')  # intermediate
-OUTPUT_DIR = Path('csscompile/output')  # output for wiki
 SASS_PROGRAM = 'dart-sass/sass'  # path to Sass binary
 
 
 def script_main():
     logger.info('Started csscompile.')
-    _pull()
-    _compile()
-    _postprocess()
-    _push()
+    with tempfile.TemporaryDirectory() as tempdir:
+        Paths.scss_dir = Path(tempdir) / Paths.scss_dir
+        Paths.scss_dir.mkdir(parents=True)
+        Paths.css_dir = Path(tempdir) / Paths.css_dir
+        Paths.css_dir.mkdir(parents=True)
+        Paths.output_dir = Path(tempdir) / Paths.output_dir
+        Paths.output_dir.mkdir(parents=True)
+        _pull()
+        _compile()
+        _postprocess()
+        _push()
+
+
+class Paths():
+    scss_dir = Path('csscompile/scss')  # input from wiki
+    css_dir = Path('csscompile/css')  # intermediate
+    output_dir = Path('csscompile/output')  # output for wiki
 
 
 def _pull():
@@ -71,7 +82,7 @@ def _pull():
     for page in pagelist:
         pagename: str = page['title'].replace(' ', '_')
         pagetext = page['revisions'][0]['slots']['main']['*']
-        filepath = SCSS_DIR / pagename.removeprefix('MediaWiki:Common.css/src/')
+        filepath = Paths.scss_dir / pagename.removeprefix('MediaWiki:Common.css/src/')
         filepath.parents[0].mkdir(parents=True, exist_ok=True)
         with open(filepath, 'w+', encoding='utf-8') as f:
             f.write(pagetext)
@@ -82,14 +93,16 @@ def _pull():
 
 def _compile():
     """Compile the local SCSS files to CSS."""
-    CSS_DIR.mkdir(parents=True)
-
     # there's also a Python library for Sass compilation, `libsass`, but it seems
     # to break on `@include lib.pseudo-block;` (specifically the period after
     # `lib`), so we have to resort to invoking the external program
     try:
         subprocess.run(
-            args = [SASS_PROGRAM, '--no-charset', '--no-source-map', f'{SCSS_DIR}:{CSS_DIR}'],
+            args = [
+                SASS_PROGRAM,
+                '--no-charset', '--no-source-map',
+                f'{Paths.scss_dir}:{Paths.css_dir}'
+            ],
             encoding = 'utf-8',
             capture_output = True,
             check = True
@@ -117,24 +130,22 @@ def _postprocess():
     Build the Common.css and Theme-*.css files from the CSS files.
     """
 
-    OUTPUT_DIR.mkdir(parents=True)
-
     common_css_text = ''
-    with open(CSS_DIR / 'Common.css') as f:
+    with open(Paths.css_dir / 'Common.css') as f:
         common_css_text = f.read()
 
     common_css_text = _directive_import(common_css_text)
     common_css_text = _directive_comment(common_css_text)
     themes_rules, common_css_text = _directive_theme(common_css_text)
 
-    with open(OUTPUT_DIR / 'Common.css', mode='w+', encoding='utf-8') as f:
+    with open(Paths.output_dir / 'Common.css', mode='w+', encoding='utf-8') as f:
         f.write(common_css_text)
         logger.debug(f'Wrote {f.tell() / 1024:.2f} KiB to {f.name}.')
     logger.info('Created Common.css.')
 
     for themename, themerules in themes_rules.items():
         headerline = f'/* theme: {themename} */\n'
-        with open(OUTPUT_DIR / f'Theme-{themename}.css', mode='w+', encoding='utf-8') as f:
+        with open(Paths.output_dir / f'Theme-{themename}.css', mode='w+', encoding='utf-8') as f:
             f.write(headerline + themerules)
             logger.debug(f'Wrote {f.tell() / 1024:.2f} KiB to {f.name}.')
     logger.info(f'Created {len(themes_rules)} theme CSS files.')
@@ -146,7 +157,7 @@ def _directive_import(text: str):
 
     def _replacement(match: re.Match):
         # read and close the file first, then perform the recursive replacement
-        with open(CSS_DIR / match.group('filename')) as f:
+        with open(Paths.css_dir / match.group('filename')) as f:
             text = f.read()
         # inherit the indentation of @import
         text = re.sub('^', match.group('indent'), text, flags=re.M)
@@ -180,10 +191,10 @@ def _directive_theme(text: str):
 
 def _push():
     summary = Bot.summary('[[User:Ryebot/bot/scripts/csscompile|Updated]].')
-    output_files = sorted(list(OUTPUT_DIR.iterdir()))
+    output_files = sorted(list(Paths.output_dir.iterdir()))
     for file in output_files:
 		# strip the first path part ('csscompile/output/')
-        pagename = file.resolve().relative_to(OUTPUT_DIR.resolve())
+        pagename = file.resolve().relative_to(Paths.output_dir.resolve())
         # replace it with 'MediaWiki:'
         pagename = 'MediaWiki:' + pagename.as_posix()
         with open(file) as f:
