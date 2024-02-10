@@ -25,10 +25,12 @@ def main():
     """Main entry function."""
     ryebot_version = metadata.version(__package__)
     args = _parse_commandline_args(ryebot_version)
-    Bot.scriptname_to_run = args.script
-    Bot.dry_run = args.dryrun
-    Bot.is_on_github_actions = args.github
     _setup_logging(debug_on_console=args.verbose, log_to_file=args.logfile)
+    Bot.init_from_commandline_parameters(
+        scriptname_to_run = args.script,
+        dry_run = args.dryrun,
+        is_on_github_actions = args.github
+    )
     logger.info(
         f"Started ryebot v{ryebot_version} main.py for script "
         f'"{Bot.scriptname_to_run}".'

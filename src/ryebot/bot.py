@@ -1,15 +1,37 @@
 from custom_mwclient import WikiClient
 
 
-class Bot():
+class _Bot(type):
+    """Metaclass for providing read-only class properties to `Bot`."""
+
+    @property  # read-only attribute
+    def scriptname_to_run(cls):
+        return cls._scriptname_to_run
+
+    @property  # read-only attribute
+    def dry_run(cls):
+        return cls._dry_run
+
+    @property  # read-only attribute
+    def is_on_github_actions(cls):
+        return cls._is_on_github_actions
+
+
+class Bot(metaclass=_Bot):
     """Provides module-wide variables and functions."""
-    is_on_github_actions: bool = False
-    scriptname_to_run: str = ''
-    dry_run: bool = False
+
+    _scriptname_to_run: str = ''
+    _dry_run: bool = False
+    _is_on_github_actions: bool = False
     site: WikiClient = None
     other_sites: dict[str, WikiClient] = {}
     common_summary_suffix: str = ''
     script_output: str = ''
+
+    def init_from_commandline_parameters(scriptname_to_run: str, dry_run: bool, is_on_github_actions: bool):
+        Bot._scriptname_to_run = scriptname_to_run
+        Bot._dry_run = dry_run
+        Bot._is_on_github_actions = is_on_github_actions
 
     def summary(summary_core_text: str = ''):
         """Append the common suffix, truncating the core text if necessary."""
