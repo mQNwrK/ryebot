@@ -3,8 +3,11 @@ from http.client import responses
 from importlib import metadata
 import logging
 import os
+from pathlib import Path
+import platform
 import re
 import sys
+import time
 
 from ryebot.bot import Bot
 from ryebot.errors import ScriptRuntimeError, WrongUserError, WrongWikiError
@@ -25,7 +28,7 @@ def main():
     Bot.scriptname_to_run = args.script
     Bot.dry_run = args.dryrun
     Bot.is_on_github_actions = args.github
-    _setup_logging(debug_on_console=args.verbose)
+    _setup_logging(debug_on_console=args.verbose, log_to_file=args.logfile)
     logger.info(
         f"Started ryebot v{ryebot_version} main.py for script "
         f'"{Bot.scriptname_to_run}".'
@@ -159,12 +162,13 @@ def _parse_commandline_args(ryebot_version: str) -> argparse.Namespace:
     parser.add_argument('-V', '--version', action='version', version=ryebot_version)
     parser.add_argument('script', choices=scriptfunctions.keys())
     parser.add_argument('--dryrun', action='store_true')
+    parser.add_argument('--logfile', action='store_true')
     parser.add_argument('-g', '--github', action='store_true')
     parser.add_argument('-v', '--verbose', action='store_true')
     return parser.parse_args()
 
 
-def _setup_logging(debug_on_console: bool = False):
+def _setup_logging(debug_on_console: bool = False, log_to_file: bool = False):
     ryebotLogger.setLevel(logging.DEBUG)
 
     # create a new handler to print to console
@@ -178,3 +182,24 @@ def _setup_logging(debug_on_console: bool = False):
     mwclientLogger = logging.getLogger("mwclient")
     mwclientLogger.setLevel(logging.WARNING)
     mwclientLogger.addHandler(print_to_console)
+
+    if log_to_file:
+        log_directory: Path = {
+            'Windows': Path(os.getenv('LOCALAPPDATA')),
+            'Linux': Path.home() / '.cache',
+            'Darwin': Path.home() / 'Library' / 'Logs'  # macOS
+        }.get(platform.system(), Path.home())
+        log_directory = log_directory.joinpath(__package__, Bot.scriptname_to_run)
+        log_directory.mkdir(parents=True, exist_ok=True)
+        log_filename = Bot.scriptname_to_run + '_' + time.strftime('%Y-%m-%dT%H%M%SZ', time.gmtime()) + '.log'
+        # create a new handler to print to file
+        print_to_file = logging.FileHandler(log_directory / log_filename)
+        print_to_file.setLevel(logging.DEBUG)
+        # log entry format
+        formatter = logging.Formatter('[%(asctime)s] %(message)s', '%c')
+        # all entry timestamps in UTC
+        formatter.converter = time.gmtime
+        print_to_file.setFormatter(formatter)
+        # register handler to logger
+        ryebotLogger.addHandler(print_to_file)
+        mwclientLogger.addHandler(print_to_file)
