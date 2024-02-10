@@ -9,7 +9,7 @@ from mwclient.page import Page
 from requests.exceptions import HTTPError
 
 from ryebot.bot import Bot
-from ryebot.errors import ScriptRuntimeError
+from ryebot.errors import LoginError, ScriptRuntimeError
 from ryebot.login import login
 from ryebot.script_configuration import ScriptConfiguration
 from ryebot.stopwatch import Stopwatch
@@ -43,7 +43,7 @@ def script_main():
     # ------------- Get wiki names from config, validate them -------------
     wikis = _validate_wikis_from_config(config["wikis"])
     if not wikis:
-        logger.info("No valid wikis. Terminated with no changes.")
+        logger.info("No valid wikis to sync to. Terminated with no changes.")
         return
     logger.info("Wikis to sync to: " + str(wikis))
 
@@ -94,7 +94,17 @@ def script_main():
     saveresults: dict[str, list[tuple[str, dict, Stopwatch]]] = {}
     for wiki in wikis:
         logger.info('+' * 40 + ' ' + wiki.upper())
-        site = login("terraria/" + wiki)
+        try:
+            site = login("terraria/" + wiki)
+        except LoginError:
+            logger.exception(
+                f"Skipped {wiki.upper()} because logging in to it failed:",
+                extra = {
+                    "head": f"Couldn't sync any pages to {wiki.upper()}!",
+                    "body": f"Logging in to {wiki.upper()} failed."
+                }
+            )
+            continue
         Bot.other_sites[wiki] = site
 
         titles_lang = [p['title_lang'] for p in pages[wiki].values()]
