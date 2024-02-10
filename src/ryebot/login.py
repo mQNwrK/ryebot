@@ -16,18 +16,21 @@ USER_AGENT = (
 )
 
 
-def login(lang: str = "en"):
-    """Login to wiki and return the `WikiggClient` object."""
-    targetwiki = "terraria" + (f"/{lang}" if lang != "en" else '')
+def login(targetwiki: str = 'terraria/en'):
+    """Login to the `targetwiki` and return the `WikiggClient` object."""
     wiki_auth = WikiAuth.from_env('RYEBOT_USERNAME', 'RYEBOT_PASSWORD')
+
+    kwargs = {
+        'wikiname': targetwiki,
+        'credentials': wiki_auth,
+        'clients_useragent': USER_AGENT
+    }
+    if '/' in targetwiki:
+        kwargs['wikiname'], kwargs['lang'] = targetwiki.split('/', maxsplit=1)
 
     # --- perform actual login ---
     try:
-        site = WikiggClient(
-            "terraria", lang = lang,
-            credentials = wiki_auth,
-            clients_useragent = USER_AGENT,
-        )
+        site = WikiggClient(**kwargs)
     except Exception as exc:
         raise LoginError(targetwiki, str(exc)) from exc
 

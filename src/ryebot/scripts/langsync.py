@@ -94,7 +94,7 @@ def script_main():
     saveresults: dict[str, list[tuple[str, dict, Stopwatch]]] = {}
     for wiki in wikis:
         logger.info('+' * 40 + ' ' + wiki.upper())
-        site = login(wiki)
+        site = login("terraria/" + wiki)
         Bot.other_sites[wiki] = site
 
         titles_lang = [p['title_lang'] for p in pages[wiki].values()]
