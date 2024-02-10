@@ -35,6 +35,8 @@ CLOUDFLARE_SAFETY_DELAY: float = 15  # in seconds
 
 def script_main():
     logger.info("Started langsync.")
+    Bot.site = login()
+
     config = ScriptConfiguration("langsync", DEFAULT_CONFIG)
     config.update_from_wiki()
 

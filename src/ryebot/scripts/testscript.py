@@ -3,6 +3,7 @@ import random
 import time
 
 from ryebot.bot import Bot
+from ryebot.login import login
 from ryebot.script_configuration import ScriptConfiguration
 from ryebot.stopwatch import Stopwatch
 
@@ -19,6 +20,8 @@ DEFAULT_CONFIG = {
 
 def script_main():
     logger.info("Started testscript.")
+    Bot.site = login()
+
     config = ScriptConfiguration("testscript", DEFAULT_CONFIG)
     logger.info(config)
     logger.info(config.is_default())

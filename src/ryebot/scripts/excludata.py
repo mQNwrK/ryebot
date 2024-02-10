@@ -4,6 +4,7 @@ import re
 
 from ryebot.bot import Bot
 from ryebot.errors import ScriptRuntimeError
+from ryebot.login import login
 from ryebot.stopwatch import Stopwatch
 
 
@@ -12,6 +13,7 @@ logger = logging.getLogger(__name__)
 
 def script_main():
     logger.info("Started excludata.")
+    Bot.site = login()
 
     summary = Bot.summary("[[User:Ryebot/bot/scripts/excludatac|Updated]].")
     data_template_name = "Template:Exclusive/luadata"

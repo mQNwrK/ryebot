@@ -9,6 +9,7 @@ from semantic_version import Version as SemVer
 
 from ryebot.bot import Bot
 from ryebot.errors import ScriptRuntimeError
+from ryebot.login import login
 from ryebot.script_configuration import ScriptConfiguration
 from ryebot.stopwatch import Stopwatch
 
@@ -37,6 +38,8 @@ class MapviewerInfo(NamedTuple):
 
 def script_main():
     logger.info("Started update_mapviewer_versions.")
+    Bot.site = login()
+
     config = ScriptConfiguration("mapviewerversions")
     config.update_from_wiki()
 

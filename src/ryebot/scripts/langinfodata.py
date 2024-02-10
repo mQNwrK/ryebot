@@ -6,6 +6,7 @@ import requests
 
 from ryebot.bot import Bot
 from ryebot.errors import ScriptRuntimeError
+from ryebot.login import login
 from ryebot.stopwatch import Stopwatch
 
 
@@ -14,6 +15,7 @@ logger = logging.getLogger(__name__)
 
 def script_main():
     logger.info("Started langinfodata.")
+    Bot.site = login()
 
     summary = Bot.summary("[[User:Ryebot/bot/scripts/langinfodatac|Updated]].")
     data_template_name = "Template:Language info/datagen"

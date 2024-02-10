@@ -6,6 +6,7 @@ import tempfile
 
 from ryebot.bot import Bot
 from ryebot.errors import ScriptRuntimeError
+from ryebot.login import login
 from ryebot.stopwatch import Stopwatch
 
 
@@ -17,6 +18,8 @@ SASS_PROGRAM = 'dart-sass/sass'  # path to Sass binary
 
 def script_main():
     logger.info('Started csscompile.')
+    Bot.site = login()
+
     with tempfile.TemporaryDirectory() as tempdir:
         Paths.scss_dir = Path(tempdir) / Paths.scss_dir
         Paths.scss_dir.mkdir(parents=True)

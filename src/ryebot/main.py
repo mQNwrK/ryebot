@@ -146,7 +146,6 @@ def _main_for_github_actions(log_debug: bool = False):
 
 def _run_script():
     """Run the desired script."""
-    Bot.site = login()
     if Bot.scriptname_to_run in scriptfunctions:
         Bot.script_output = ''
         scriptfunctions[Bot.scriptname_to_run]()
