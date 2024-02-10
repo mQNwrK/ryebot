@@ -16,7 +16,7 @@ USER_AGENT = (
 )
 
 
-def login(targetwiki: str = 'terraria/en'):
+def login(targetwiki: str = 'terraria'):
     """Login to the `targetwiki` and return the `WikiggClient` object."""
     wiki_auth = WikiAuth.from_env('RYEBOT_USERNAME', 'RYEBOT_PASSWORD')
 
