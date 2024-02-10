@@ -1,5 +1,7 @@
+import copy
 from importlib import metadata
 import logging
+from pprint import pformat
 
 from custom_mwclient import WikiAuth, WikiggClient
 
@@ -38,6 +40,18 @@ def login(lang: str = "en"):
             f'logged in as "{wiki_user}" but expected "{expected_user}"'
         )
 
+    # --- validate that the user is not blocked ---
+    if site.blocked:
+        raise LoginError(
+            targetwiki,
+            'user "{}" is blocked (by: {}; reason: "{}")'.format(wiki_user, *site.blocked)
+        )
+
     # --- validations successful ---
     logger.info(f'Logged in to wiki "{wikiname}" ({site.host}) with user "{wiki_user}".')
+
+    site_for_log = copy.deepcopy(site)
+    site_for_log.credentials = '***REDACTED***'
+    logger.debug(pformat(vars(site_for_log)))
+
     return site
