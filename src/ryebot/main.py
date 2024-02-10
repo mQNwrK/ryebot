@@ -20,12 +20,12 @@ logger = logging.getLogger(__name__)
 
 def main():
     """Main entry function."""
-    args = parse_commandline_args()
+    ryebot_version = metadata.version(__package__)
+    args = parse_commandline_args(ryebot_version)
     Bot.scriptname_to_run = args.script
     Bot.dry_run = args.dryrun
     Bot.is_on_github_actions = args.github
     setup_logging(debug_on_console=args.verbose)
-    ryebot_version = metadata.version(__package__)
     logger.info(
         f"Started ryebot v{ryebot_version} main.py for script "
         f'"{Bot.scriptname_to_run}".'
@@ -142,8 +142,9 @@ def main_for_github_actions(log_debug: bool = False):
         logger.info("Successfully completed main.py.")
 
 
-def parse_commandline_args() -> argparse.Namespace:
+def parse_commandline_args(ryebot_version: str) -> argparse.Namespace:
     parser = argparse.ArgumentParser()
+    parser.add_argument('-V', '--version', action='version', version=ryebot_version)
     parser.add_argument('script', choices=scriptfunctions.keys())
     parser.add_argument('--dryrun', action='store_true')
     parser.add_argument('-g', '--github', action='store_true')
