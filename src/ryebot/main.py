@@ -7,8 +7,8 @@ import re
 import sys
 
 from ryebot.bot import Bot
-from ryebot.core import ryebot_core
 from ryebot.errors import ScriptRuntimeError, WrongUserError, WrongWikiError
+from ryebot.login import login
 from ryebot.scripts import scriptfunctions
 
 
