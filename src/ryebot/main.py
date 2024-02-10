@@ -21,11 +21,11 @@ logger = logging.getLogger(__name__)
 def main():
     """Main entry function."""
     ryebot_version = metadata.version(__package__)
-    args = parse_commandline_args(ryebot_version)
+    args = _parse_commandline_args(ryebot_version)
     Bot.scriptname_to_run = args.script
     Bot.dry_run = args.dryrun
     Bot.is_on_github_actions = args.github
-    setup_logging(debug_on_console=args.verbose)
+    _setup_logging(debug_on_console=args.verbose)
     logger.info(
         f"Started ryebot v{ryebot_version} main.py for script "
         f'"{Bot.scriptname_to_run}".'
@@ -33,10 +33,9 @@ def main():
     if Bot.dry_run:
         logger.info("Dry-run mode is active: No changes to any wiki pages will be made.")
 
-    # `ryebot_core` is the function where the actual actions are executed
     if not Bot.is_on_github_actions:
         try:
-            ryebot_core()
+            _run_script()
         except ScriptRuntimeError:
             pass
         except Exception:
@@ -44,13 +43,13 @@ def main():
         else:
             logger.info("Successfully completed main.py.")
     else:
-        # we need a bit of preparation if we're running on GitHub Actions ("GH").
-        # `ryebot_core` is called in here, with the GH-specific wrapping.
-        main_for_github_actions(log_debug=args.verbose)
+        # we need a bit of preparation if we're running on GitHub Actions.
+        # `_run_script` is called in here, with the GitHub Actions-specific wrapping.
+        _main_for_github_actions(log_debug=args.verbose)
 
 
-def main_for_github_actions(log_debug: bool = False):
-    """Run `ryebot_core`, wrapped in the stuff for GitHub Actions."""
+def _main_for_github_actions(log_debug: bool = False):
+    """Execute `_run_script`, wrapped in the stuff for GitHub Actions."""
     workflow_summary_filename = os.getenv("GITHUB_STEP_SUMMARY")
     workflow_run_id = os.getenv("GITHUB_RUN_ID")
 
@@ -123,7 +122,7 @@ def main_for_github_actions(log_debug: bool = False):
     Bot.common_summary_suffix = f"  »ID:{workflow_run_id}«"
 
     try:
-        ryebot_core()
+        _run_script()
     except (WrongUserError, WrongWikiError) as e:
         with open(workflow_summary_filename, 'a') as f:
             f.write(f"### Login failed!\n")
@@ -142,7 +141,20 @@ def main_for_github_actions(log_debug: bool = False):
         logger.info("Successfully completed main.py.")
 
 
-def parse_commandline_args(ryebot_version: str) -> argparse.Namespace:
+def _run_script():
+    """Run the desired script."""
+    Bot.site = login()
+    if Bot.scriptname_to_run in scriptfunctions:
+        Bot.script_output = ''
+        scriptfunctions[Bot.scriptname_to_run]()
+    else:
+        raise RuntimeError(
+            f'unknown script name "{Bot.scriptname_to_run}"; see "python3 -m '
+            'ryebot --help"'
+        )
+
+
+def _parse_commandline_args(ryebot_version: str) -> argparse.Namespace:
     parser = argparse.ArgumentParser()
     parser.add_argument('-V', '--version', action='version', version=ryebot_version)
     parser.add_argument('script', choices=scriptfunctions.keys())
@@ -152,7 +164,7 @@ def parse_commandline_args(ryebot_version: str) -> argparse.Namespace:
     return parser.parse_args()
 
 
-def setup_logging(debug_on_console: bool = False):
+def _setup_logging(debug_on_console: bool = False):
     ryebotLogger.setLevel(logging.DEBUG)
 
     # create a new handler to print to console
