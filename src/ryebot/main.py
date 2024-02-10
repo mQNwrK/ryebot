@@ -10,7 +10,7 @@ import sys
 import time
 
 from ryebot.bot import Bot
-from ryebot.errors import ScriptRuntimeError, WrongUserError, WrongWikiError
+from ryebot.errors import LoginError, ScriptRuntimeError
 from ryebot.login import login
 from ryebot.scripts import scriptfunctions
 
@@ -128,13 +128,11 @@ def _main_for_github_actions(log_debug: bool = False):
 
     try:
         _run_script()
-    except (WrongUserError, WrongWikiError) as e:
-        with open(workflow_summary_filename, 'a') as f:
-            f.write(f"### Login failed!\n")
-            f.write(str(e))
-        logger.exception('')
-        sys.exit(1)  # explicitly fail
     except ScriptRuntimeError:
+        write_summary()
+        sys.exit(1)  # explicitly fail
+    except LoginError as exc:
+        logger.exception(str(exc), extra={"head": "Login failed"})
         write_summary()
         sys.exit(1)  # explicitly fail
     except Exception as exc:
