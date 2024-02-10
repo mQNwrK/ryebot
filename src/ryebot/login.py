@@ -20,8 +20,16 @@ def login(lang: str = "en"):
     """Login to wiki and return the `WikiggClient` object."""
     targetwiki = "terraria" + (f"/{lang}" if lang != "en" else '')
     wiki_auth = WikiAuth.from_env('RYEBOT_USERNAME', 'RYEBOT_PASSWORD')
+
     # --- perform actual login ---
-    site = WikiggClient("terraria", lang=lang, credentials=wiki_auth, clients_useragent=USER_AGENT)  # this is the actual login
+    try:
+        site = WikiggClient(
+            "terraria", lang = lang,
+            credentials = wiki_auth,
+            clients_useragent = USER_AGENT,
+        )
+    except Exception as exc:
+        raise LoginError(targetwiki, str(exc)) from exc
 
     # --- validate wikiname post-login ---
     wikiname = site.get_current_wiki_name()
