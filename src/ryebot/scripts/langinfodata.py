@@ -126,8 +126,11 @@ def _read_data_template(data_template_name: str):
 
     # now expand all #time parser functions
     for t in wikicode.ifilter_templates(matches=lambda t: str(t.name).startswith("#time:")):
-        expanded_template = Bot.site.expandtemplates(str(t))
-        wikicode.replace(t, expanded_template)
+        api_result = Bot.site.api("expandtemplates", prop="wikitext", text=str(t))
+        expanded_template = api_result.get("expandtemplates", {}).get("wikitext")
+        if expanded_template is not None:
+            # replace the template call in the wikicode with the expanded template
+            wikicode.replace(t, expanded_template)
 
     # strip all <nowiki> tags
     for t in wikicode.ifilter_tags(matches=lambda t: str(t.tag) == "nowiki"):
