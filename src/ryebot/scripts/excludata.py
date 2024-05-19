@@ -28,7 +28,7 @@ def script_main():
     # get Page object for the target module
     module_page = _get_target_module_page(target_module_name)
 
-    if _no_actual_changes(template_output, module_page):
+    if _no_actual_changes(template_output, module_page, True):
         logger.info(
             "No changes to be made.",
             extra = {
@@ -199,12 +199,18 @@ def _get_target_module_page(module_name):
         raise ScriptRuntimeError(errorstr)
 
 
-def _no_actual_changes(new_data_text: str, data_page):
+def _no_actual_changes(new_data_text: str, data_page, safe_mode: bool = False):
     """Check if there is an actual difference in data between new and old.
 
     It is possible that the `new_data_text` merely has a new order of lines,
     or perhaps additional or removed blank lines. In this case, the actual
     data of the database does not change, so the save can be skipped.
+
+    If an error occurs during the check, e.g. because fetching the current data
+    text fails, then it is assumed that changes *did* occur. If `safe_mode` is
+    `True`, then the opposite happens: It is assumed that no changes occured.
+    `safe_mode` ensures that this function only returns `True` if the check was
+    error-free.
     """
 
     try:
@@ -224,7 +230,9 @@ def _no_actual_changes(new_data_text: str, data_page):
                 )
             }
         )
-        return False  # cannot perform check, so assume that there *are* changes
+        # cannot perform check, so assume that there *are* changes (unless `safe_mode`
+        # is True: in that case assume that there are no changes)
+        return safe_mode
 
     # we don't want to compare every single line but only the relevant data lines,
     # because e.g. the timestamp will always be different
