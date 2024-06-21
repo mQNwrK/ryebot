@@ -111,9 +111,10 @@ def _compile():
             check = True
         )
     except subprocess.CalledProcessError as exception:
-        errorstr = f'Error during SCSS compilation. Exit code: {exception.returncode}'
+        errorstr = 'Error during SCSS compilation.'
+        exitcodestr = f'Exit code: {exception.returncode}.'
         logger.error(
-            errorstr + f' Error output: {exception.stderr}',
+            errorstr,
             extra = {
                 'head': 'Compilation failed',
                 'body': (
@@ -122,6 +123,8 @@ def _compile():
                 )
             }
         )
+        logger.error(f'{exitcodestr} Error output: {exception.stderr}')
+        errorstr += ' ' + exitcodestr
         raise ScriptRuntimeError(errorstr)
 
     logger.info('Compiled the SCSS files to CSS.')
