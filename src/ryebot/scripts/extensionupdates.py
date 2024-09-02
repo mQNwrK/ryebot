@@ -221,7 +221,7 @@ def _compare(old_extensions: list[dict[str, str]], new_extensions: list[dict[str
     # extensions that were removed
     result.extensions_removed = list(extension_names_removed)
 
-    # extenions that were added
+    # extensions that were added
     # convert extension names to { 'name1': {data}, 'name2': {data} }
     result.extensions_added = {
         extname: new_exts[extname]
