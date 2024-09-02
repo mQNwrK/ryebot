@@ -4,12 +4,18 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "ryebot"
+description = "Automated editing of The Official Terraria Wiki via scripts"
+readme = "README.md"
+requires-python = ">=3.9"
+license = { file = "LICENSE" }
+authors = [
+    { name = "Rye Greenwood" }
+]
 dependencies = [
     "custom_mwclient @ git+https://github.com/h9a-rD4ubXs8/custom_mwclient.git@main",
     "mwparserfromhell~=0.6",
     "semantic-version~=2.10"
 ]
-requires-python = ">=3.9"
 dynamic = ["version"]
 
 [tool.setuptools_scm]
