@@ -161,8 +161,8 @@ def _parse_commandline_args(ryebot_version: str) -> argparse.Namespace:
     parser.add_argument('-V', '--version', action='version', version=ryebot_version)
     parser.add_argument('script', choices=scriptfunctions.keys())
     parser.add_argument('--dryrun', action='store_true')
-    parser.add_argument('--logfile', action='store_true')
-    parser.add_argument('-g', '--github', action='store_true')
+    parser.add_argument('--logfile', action='store_true', help=f'write debug log in {_logdir()}')
+    parser.add_argument('-g', '--github', action='store_true', help='indicate that the platform is GitHub Actions')
     parser.add_argument('-v', '--verbose', action='store_true')
     return parser.parse_args()
 
