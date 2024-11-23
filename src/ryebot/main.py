@@ -201,8 +201,12 @@ def _setup_logging(debug_on_console: bool = False, log_to_file: bool = False):
 
 def _logdir() -> Path:
     """Return the base directory for logfiles on the current platform."""
-    return {
-        'Windows': Path(os.getenv('LOCALAPPDATA')),
+    logdir = {
+        'Windows': Path(os.getenv('LOCALAPPDATA', '')),
         'Linux': Path.home() / '.cache',
         'Darwin': Path.home() / 'Library' / 'Logs'  # macOS
-    }.get(platform.system(), Path.home()) / __package__
+    }.get(platform.system())
+    # fallback to home directory if platform is not supported or Windows env is empty
+    if logdir is None or logdir == Path(''):
+        logdir = Path.home()
+    return logdir / __package__
