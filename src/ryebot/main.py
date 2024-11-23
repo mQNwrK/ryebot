@@ -183,12 +183,7 @@ def _setup_logging(debug_on_console: bool = False, log_to_file: bool = False):
     mwclientLogger.addHandler(print_to_console)
 
     if log_to_file:
-        log_directory: Path = {
-            'Windows': Path(os.getenv('LOCALAPPDATA')),
-            'Linux': Path.home() / '.cache',
-            'Darwin': Path.home() / 'Library' / 'Logs'  # macOS
-        }.get(platform.system(), Path.home())
-        log_directory = log_directory.joinpath(__package__, Bot.scriptname_to_run)
+        log_directory = _logdir() / Bot.scriptname_to_run
         log_directory.mkdir(parents=True, exist_ok=True)
         log_filename = Bot.scriptname_to_run + '_' + time.strftime('%Y-%m-%dT%H%M%SZ', time.gmtime()) + '.log'
         # create a new handler to print to file
@@ -202,3 +197,12 @@ def _setup_logging(debug_on_console: bool = False, log_to_file: bool = False):
         # register handler to logger
         ryebotLogger.addHandler(print_to_file)
         mwclientLogger.addHandler(print_to_file)
+
+
+def _logdir() -> Path:
+    """Return the base directory for logfiles on the current platform."""
+    return {
+        'Windows': Path(os.getenv('LOCALAPPDATA')),
+        'Linux': Path.home() / '.cache',
+        'Darwin': Path.home() / 'Library' / 'Logs'  # macOS
+    }.get(platform.system(), Path.home()) / __package__
