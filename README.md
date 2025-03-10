@@ -8,7 +8,7 @@ Ryebot supports being executed via GitHub Actions. For the Terraria Wiki, see [q
 
 ## Installation
 
-Python 3.9 or newer is required.
+Python 3.12 or newer is required.
 
 ```
 pip install git+https://github.com/mQNwrK/ryebot.git@main
