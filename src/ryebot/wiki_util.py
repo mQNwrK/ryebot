@@ -100,3 +100,9 @@ def save_page(site: WikiClient, dry_run: bool, page: Page, pagetext: str, summar
                 f'Saved page "{page.name}" with summary "{summary}". '
                 f"Diff: {diff_link}. Time: {stopwatch}"
             )
+
+
+def parse_wikitext(site: WikiClient, wikitext: str):
+    """Return the parsing result of the `wikitext`."""
+    api_result = site.api("expandtemplates", prop="wikitext", text=wikitext)
+    return api_result.get("expandtemplates", {}).get("wikitext")

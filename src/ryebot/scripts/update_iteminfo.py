@@ -5,7 +5,7 @@ from ryebot.bot import Bot
 from ryebot.errors import ScriptRuntimeError
 from ryebot.login import login
 from ryebot.stopwatch import Stopwatch
-from ryebot.wiki_util import read_page, save_page
+from ryebot.wiki_util import parse_wikitext, read_page, save_page
 
 
 logger = logging.getLogger(__name__)
@@ -23,7 +23,7 @@ def script_main():
     number_of_items_per_chunk = 100
 
     # terraria version and generation timestamp
-    module_data_code = _parse_wikitext('{{#invoke:Iteminfo/datagen|genMeta}}') + '\n'
+    module_data_code = parse_wikitext('{{#invoke:Iteminfo/datagen|genMeta}}') + '\n'
 
     # pure data code
     module_data_code += _make_data(lower_itemid, number_of_items_per_chunk) + '\n\n'
@@ -43,7 +43,7 @@ def script_main():
 
     save_page(Bot.site, Bot.dry_run, module_page, new_module_code, summary, minor=True)
 
-    module_code_with_json = _parse_wikitext('{{#invoke:Iteminfo/datagen|convertToJsonData}}')
+    module_code_with_json = parse_wikitext('{{#invoke:Iteminfo/datagen|convertToJsonData}}')
 
     target_module, _ = read_page(Bot.site, target_module_name)
     save_page(Bot.site, Bot.dry_run, target_module, module_code_with_json, summary, minor=True)
@@ -73,7 +73,7 @@ def _make_data(lower_itemid: int, number_of_items_per_chunk: int):
 
         stopwatch = Stopwatch()
         # create the code for this chunk from the datagen
-        new_module_code_chunk = _parse_wikitext(module_invocation_code)
+        new_module_code_chunk = parse_wikitext(module_invocation_code)
         if new_module_code_chunk:
             stopwatch.stop()
             logger.info(f"    parsed in {stopwatch}")
@@ -169,15 +169,10 @@ def _no_actual_changes(new_data_text: str, current_data_text: str):
 
 def _get_max_itemid():
     """Return the greatest item ID by expanding {{iteminfo/maxId}}."""
-    parsed_wikitext = _parse_wikitext("{{iteminfo/maxId}}")
+    parsed_wikitext = parse_wikitext("{{iteminfo/maxId}}")
     if parsed_wikitext:
         try:
             return int(parsed_wikitext)
         except ValueError:
             # result is not a valid int
             pass
-
-
-def _parse_wikitext(wikitext: str):
-    api_result = Bot.site.api("expandtemplates", prop="wikitext", text=wikitext)
-    return api_result.get("expandtemplates", {}).get("wikitext")
