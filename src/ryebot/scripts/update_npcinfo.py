@@ -5,6 +5,7 @@ from ryebot.bot import Bot
 from ryebot.errors import ScriptRuntimeError
 from ryebot.login import login
 from ryebot.stopwatch import Stopwatch
+from ryebot.wiki_util import parse_wikitext, read_page, save_page
 
 
 logger = logging.getLogger(__name__)
@@ -20,13 +21,13 @@ def script_main():
     number_of_npcs_per_chunk = 100
 
     # terraria version and generation timestamp
-    module_data_code = _parse_wikitext('{{#invoke:Npcinfo/datagen|genMeta}}') + '\n'
+    module_data_code = parse_wikitext('{{#invoke:Npcinfo/datagen|genMeta}}') + '\n'
 
     # pure data code
     module_data_code += _make_data(number_of_npcs_per_chunk) + '\n\n'
 
-    module_page = _get_page_safely(target_module_name)
-    head, body, foot = _get_existing_module_text_parts(module_page)
+    module_page, existing_module_text = read_page(target_module_name)
+    head, body, foot = _get_existing_module_text_parts(module_page, existing_module_text)
 
     # compare the just generated pure data code with the existing pure data code
     if _no_actual_changes(module_data_code, body):
@@ -38,35 +39,7 @@ def script_main():
 
     new_module_code = head + module_data_code + foot
 
-    # save page
-    if Bot.dry_run:
-        logger.info(f'Would save page "{module_page.name}" with summary "{summary}".')
-    else:
-        stopwatch = Stopwatch()
-        try:
-            saveresult = Bot.site.save(module_page, new_module_code, summary=summary, minor=True)
-        except Exception:
-            logger.exception(
-                "Error while saving:",
-                extra = {
-                    "head": f'Didn\'t save the update of "{module_page.name}"',
-                    "body": (
-                        "Couldn't save the page due to some error; check the "
-                        "logs for details."
-                    )
-                }
-            )
-        else:
-            stopwatch.stop()
-            diff_id = saveresult.get('newrevid')
-            diff_link = Bot.site.fullurl(diff=diff_id) if diff_id else None
-            logger.info(
-                (
-                    f'Saved page "{module_page.name}" with summary "{summary}". '
-                    f"Diff: {diff_link if diff_link else 'None'}. Time: {stopwatch}"
-                ),
-                extra = {"head": "Updated successfully"}
-            )
+    save_page(Bot.site, Bot.dry_run, module_page, new_module_code, summary, minor=True)
 
 
 def _make_data(number_of_npcs_per_chunk: int):
@@ -103,7 +76,7 @@ def _make_data(number_of_npcs_per_chunk: int):
 
         stopwatch = Stopwatch()
         # create the code for this chunk from the datagen
-        new_module_code_chunk = _parse_wikitext(module_invocation_code)
+        new_module_code_chunk = parse_wikitext(module_invocation_code)
         if new_module_code_chunk:
             stopwatch.stop()
             logger.info(f"    parsed in {stopwatch}")
@@ -125,7 +98,7 @@ def _make_data(number_of_npcs_per_chunk: int):
     return ''.join(module_code_chunks)
 
 
-def _get_existing_module_text_parts(module_page):
+def _get_existing_module_text_parts(module_page, module_text: str):
     """Return the "head", "body", and "foot" of the existing module.
 
     The module has some other text before and after the data code that needs to
@@ -137,7 +110,6 @@ def _get_existing_module_text_parts(module_page):
     start_line = "---------------------------------------- DATA START\n"
     end_line = "---------------------------------------- DATA END\n"
 
-    module_text: str = module_page.text()
     module_text_lines = module_text.splitlines(keepends=True)
 
     try:
@@ -200,7 +172,7 @@ def _no_actual_changes(new_data_text: str, current_data_text: str):
 
 def _get_max_npcid():
     """Return the greatest NPC ID by expanding {{npcinfo/maxId}}."""
-    parsed_wikitext = _parse_wikitext("{{npcinfo/maxId}}")
+    parsed_wikitext = parse_wikitext("{{npcinfo/maxId}}")
     if parsed_wikitext:
         try:
             return int(parsed_wikitext)
@@ -211,34 +183,10 @@ def _get_max_npcid():
 
 def _get_min_npcid():
     """Return the greatest NPC ID by expanding {{npcinfo/minId}}."""
-    parsed_wikitext = _parse_wikitext("{{npcinfo/minId}}")
+    parsed_wikitext = parse_wikitext("{{npcinfo/minId}}")
     if parsed_wikitext:
         try:
             return int(parsed_wikitext)
         except ValueError:
             # result is not a valid int
             pass
-
-
-def _parse_wikitext(wikitext: str):
-    api_result = Bot.site.api("expandtemplates", prop="wikitext", text=wikitext)
-    return api_result.get("expandtemplates", {}).get("wikitext")
-
-
-def _get_page_safely(pagename: str):
-    """Safely get the `mwparserfromhell.Page` object for the `pagename`."""
-    try:
-        return Bot.site.pages[pagename]
-    except Exception:
-        errorstr = f'Reading "{pagename}" failed'
-        logger.exception(
-            f'Error while reading "{pagename}":',
-            extra = {
-                "head": errorstr,
-                "body": (
-                    "Couldn't fetch the page due to some error; check the logs "
-                    "for details."
-                )
-            }
-        )
-        raise ScriptRuntimeError(errorstr)
