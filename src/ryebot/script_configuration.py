@@ -1,5 +1,6 @@
 from collections.abc import MutableMapping
 import copy
+import json
 import logging
 
 import mwparserfromhell
@@ -55,6 +56,13 @@ class ScriptConfiguration(MutableMapping):
     def is_default(self):
         """Check if the current configuration is the same as the default from the initialization."""
         return self._config == self._default_config
+
+
+    def set_from_string(self, jsonstring: str = ''):
+        """Update the configuration from a JSON string."""
+        if jsonstring:
+            self._config = json.loads(jsonstring)
+            self._ensure_default_keys()
 
 
     def set_from_wiki(self, pagename: str = ''):
