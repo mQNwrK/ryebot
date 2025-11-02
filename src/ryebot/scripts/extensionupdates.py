@@ -29,7 +29,7 @@ def script_main():
     summary = Bot.summary("[[User:Ryebot/bot/scripts/extensionupdates|Updated]].")
 
     config = ScriptConfiguration("extensionupdates")
-    config.update_from_wiki()
+    config.set_from_wiki()
 
     extensions_today = _get_extensions_today()
     if not extensions_today:

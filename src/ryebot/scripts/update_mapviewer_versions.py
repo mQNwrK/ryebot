@@ -41,7 +41,7 @@ def script_main():
     Bot.site = login()
 
     config = ScriptConfiguration("mapviewerversions")
-    config.update_from_wiki()
+    config.set_from_wiki()
 
     template_name = config["template"]
     page, wikitext = _read_page_safely(config["wiki_page"])

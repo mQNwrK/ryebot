@@ -57,7 +57,7 @@ class ScriptConfiguration(MutableMapping):
         return self._config == self._default_config
 
 
-    def update_from_wiki(self, pagename: str = ''):
+    def set_from_wiki(self, pagename: str = ''):
         """Update the configuration from a page on the wiki.
 
         `pagename` will default to the standard location if omitted or blank.

@@ -38,7 +38,7 @@ def script_main():
     Bot.site = login()
 
     config = ScriptConfiguration("langsync", DEFAULT_CONFIG)
-    config.update_from_wiki()
+    config.set_from_wiki()
 
     # ------------- Get wiki names from config, validate them -------------
     wikis = _validate_wikis_from_config(config["wikis"])
