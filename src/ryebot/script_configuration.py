@@ -70,6 +70,7 @@ class ScriptConfiguration(MutableMapping):
 
         `pagename` will default to the standard location if omitted or blank.
         """
+
         if not pagename:
             pagename = f'User:Ryebot/bot/scripts/{self.name}/config'
         page = Bot.site.pages[pagename]

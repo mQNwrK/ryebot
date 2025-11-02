@@ -16,21 +16,27 @@ class _Bot(type):
     def is_on_github_actions(cls):
         return cls._is_on_github_actions
 
+    @property  # read-only attribute
+    def config_from_commandline(cls):
+        return cls._config_from_commandline
+
 
 class Bot(metaclass=_Bot):
     """Provides module-wide variables and functions."""
 
     _scriptname_to_run: str = ''
     _dry_run: bool = False
+    _config_from_commandline: str = ''
     _is_on_github_actions: bool = False
     site: WikiClient = None
     other_sites: dict[str, WikiClient] = {}
     common_summary_suffix: str = ''
     script_output: str = ''
 
-    def init_from_commandline_parameters(scriptname_to_run: str, dry_run: bool, is_on_github_actions: bool):
+    def init_from_commandline_parameters(scriptname_to_run: str, dry_run: bool, config: str, is_on_github_actions: bool):
         Bot._scriptname_to_run = scriptname_to_run
         Bot._dry_run = dry_run
+        Bot._config_from_commandline = config
         Bot._is_on_github_actions = is_on_github_actions
 
     def summary(summary_core_text: str = ''):

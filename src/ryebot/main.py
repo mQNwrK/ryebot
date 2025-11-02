@@ -28,6 +28,7 @@ def main():
     Bot.init_from_commandline_parameters(
         scriptname_to_run = args.script,
         dry_run = args.dryrun,
+        config = args.config,
         is_on_github_actions = args.github
     )
     _setup_logging(debug_on_console=args.verbose, log_to_file=args.logfile)
@@ -38,6 +39,8 @@ def main():
     )
     if Bot.dry_run:
         logger.info("Dry-run mode is active: No changes to any wiki pages will be made.")
+    if Bot.config_from_commandline:
+        logger.debug("Configuration input: " + Bot.config_from_commandline)
 
     if not Bot.is_on_github_actions:
         try:
@@ -165,6 +168,7 @@ def _parse_commandline_args(ryebot_version: str) -> argparse.Namespace:
     parser.add_argument('--logfile', action='store_true', help=f'write debug log in {_logdir()}')
     parser.add_argument('-g', '--github', action='store_true', help='indicate that the platform is GitHub Actions')
     parser.add_argument('-v', '--verbose', action='store_true')
+    parser.add_argument('-c', '--config')
     return parser.parse_args()
 
 
