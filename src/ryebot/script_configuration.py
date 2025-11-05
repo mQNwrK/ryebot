@@ -2,11 +2,12 @@ from collections.abc import MutableMapping
 import copy
 import json
 import logging
+from typing import Iterable
 
 import mwparserfromhell
 
 from ryebot.bot import Bot
-from ryebot.errors import NonexistentScriptConfigPageError
+from ryebot.errors import InvalidScriptConfigTypeError, NonexistentScriptConfigPageError
 
 
 logger = logging.getLogger(__name__)
@@ -100,6 +101,19 @@ class ScriptConfiguration(MutableMapping):
             config_from_wiki[param_name] = cfg_value
         self._config = config_from_wiki
         self._ensure_default_keys()
+
+
+    def validate_type(self, key: str, expected_type: type|Iterable[type]):
+        """Raise an error if the value of `key` is not of the expected type(s)."""
+        # turn `expected_type` into a tuple if it's a different kind of Iterable
+        if not isinstance(expected_type, (type, tuple)):
+            expected_type = tuple(expected_type)
+        if key in self:
+            value = self.get(key)
+            if not isinstance(value, expected_type):
+                raise InvalidScriptConfigTypeError(
+                    self.name, key, value, type(value), expected_type
+                )
 
 
     def _ensure_default_keys(self):
