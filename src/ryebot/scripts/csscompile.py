@@ -17,7 +17,7 @@ SASS_PROGRAM = 'dart-sass/sass'  # path to Sass binary
 
 
 def script_main():
-    logger.info('Started csscompile.')
+    logger.info(f'Started {Bot.scriptname_to_run}.')
     Bot.site = login()
 
     with tempfile.TemporaryDirectory() as tempdir:

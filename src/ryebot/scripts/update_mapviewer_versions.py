@@ -37,7 +37,7 @@ class MapviewerInfo(NamedTuple):
 
 
 def script_main():
-    logger.info("Started update_mapviewer_versions.")
+    logger.info(f"Started {Bot.scriptname_to_run}.")
     Bot.site = login()
 
     config = ScriptConfiguration("mapviewerversions")

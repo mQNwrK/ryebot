@@ -12,7 +12,7 @@ logger = logging.getLogger(__name__)
 
 
 def script_main():
-    logger.info("Started excludata.")
+    logger.info(f"Started {Bot.scriptname_to_run}.")
     Bot.site = login()
 
     summary = Bot.summary("[[User:Ryebot/bot/scripts/excludatac|Updated]].")

@@ -19,7 +19,7 @@ DEFAULT_CONFIG = {
 
 
 def script_main():
-    logger.info("Started testscript.")
+    logger.info(f"Started {Bot.scriptname_to_run}.")
     Bot.site = login()
 
     config = ScriptConfiguration("testscript", DEFAULT_CONFIG)

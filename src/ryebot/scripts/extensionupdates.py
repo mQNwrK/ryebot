@@ -24,7 +24,7 @@ DEFAULT_CONFIG = {
 
 
 def script_main():
-    logger.info("Started extensionupdates.")
+    logger.info(f"Started {Bot.scriptname_to_run}.")
     Bot.site = login()
     summary = Bot.summary("[[User:Ryebot/bot/scripts/extensionupdates|Updated]].")
 
