@@ -5,19 +5,19 @@ class _Bot(type):
     """Metaclass for providing read-only class properties to `Bot`."""
 
     @property  # read-only attribute
-    def scriptname_to_run(cls):
+    def scriptname_to_run(cls) -> str:
         return cls._scriptname_to_run
 
     @property  # read-only attribute
-    def dry_run(cls):
+    def dry_run(cls) -> bool:
         return cls._dry_run
 
     @property  # read-only attribute
-    def is_on_github_actions(cls):
+    def is_on_github_actions(cls) -> bool:
         return cls._is_on_github_actions
 
     @property  # read-only attribute
-    def config_from_commandline(cls):
+    def config_from_commandline(cls) -> str:
         return cls._config_from_commandline
 
 
