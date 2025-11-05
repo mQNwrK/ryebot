@@ -1,16 +1,23 @@
 import logging
 from pathlib import Path
 import re
+from shutil import rmtree
 import subprocess
 import tempfile
 
 from ryebot.bot import Bot
 from ryebot.errors import ScriptRuntimeError
 from ryebot.login import login
+from ryebot.script_configuration import ScriptConfiguration
 from ryebot.stopwatch import Stopwatch
 
 
 logger = logging.getLogger(__name__)
+
+
+DEFAULT_CONFIG = {
+    "onlypull": "",
+}
 
 
 SASS_PROGRAM = 'dart-sass/sass'  # path to Sass binary
@@ -18,7 +25,13 @@ SASS_PROGRAM = 'dart-sass/sass'  # path to Sass binary
 
 def script_main():
     logger.info(f'Started {Bot.scriptname_to_run}.')
+    config = ScriptConfiguration(Bot.scriptname_to_run, DEFAULT_CONFIG)
+    config.set_from_string(Bot.config_from_commandline)
     Bot.site = login()
+
+    if config.get('onlypull'):
+        _onlypull(config.get('onlypull'))
+        return
 
     with tempfile.TemporaryDirectory() as tempdir:
         Paths.scss_dir = Path(tempdir) / Paths.scss_dir
@@ -241,3 +254,16 @@ def _push():
                     ),
                     extra = {'head': 'Updated successfully'}
                 )
+
+
+def _onlypull(target_dir: str):
+    """Download all SCSS pages without processing them further."""
+    Paths.scss_dir = Path(target_dir) / 'scss'
+    old_scss_dir = Paths.scss_dir.with_name('scss.old')
+    if Paths.scss_dir.exists():
+        # move the existing files to .old
+        if old_scss_dir.exists():
+            rmtree(old_scss_dir)
+        Paths.scss_dir.rename(old_scss_dir)
+    Paths.scss_dir.mkdir(parents=True)
+    _pull()
