@@ -136,10 +136,8 @@ def script_main():
             if not pages[wiki][pageid]['needs_sync']:
                 continue
 
-            summary = Bot.summary(
-                f"[[:en:User:Ryebot/bot/scripts/langsync|sync]] :: en "
-                f"revid:{page['revid']}::"
-            )
+            scriptlink = '[[:en:User:Ryebot/bot/scripts/langsync|sync]]'
+            summary = Bot.summary(f"{scriptlink} :: en revid:{page['revid']}::")
 
             # fetch the page from the target wiki
             try:
@@ -440,7 +438,7 @@ def _get_pages_from_page_cfg(pages_from_config: str):
     return _get_info_for_titles(list(pages_from_config))
 
 
-def _get_info_for_titles(pagetitles: 'list[str]', site: WikiClient = ''):
+def _get_info_for_titles(pagetitles: 'list[str]', site: WikiClient):
     """Return page content and revision ID for each page in the `pagetitles`.
 
     Return a dict where the key is the page's ID and the value is another dict
@@ -458,7 +456,8 @@ def _get_info_for_titles(pagetitles: 'list[str]', site: WikiClient = ''):
     }
     """
 
-    site = site or Bot.site
+    if site is None:
+        site = Bot.site
 
     raw_pageinfo = {}
 
