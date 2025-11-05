@@ -13,8 +13,8 @@ authors = [
 ]
 dependencies = [
     "custom_mwclient @ git+https://github.com/h9a-rD4ubXs8/custom_mwclient.git@main",
-    "mwparserfromhell~=0.6",
-    "semantic-version~=2.10"
+    "mwparserfromhell~=0.7",
+    "semantic-version~=2.10",
 ]
 dynamic = ["version"]
 
