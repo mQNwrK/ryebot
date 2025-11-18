@@ -23,7 +23,7 @@ def script_main():
     number_of_items_per_chunk = 100
 
     # terraria version and generation timestamp
-    module_data_code = parse_wikitext('{{#invoke:Iteminfo/datagen|genMeta}}') + '\n'
+    module_data_code = parse_wikitext(Bot.site, '{{#invoke:Iteminfo/datagen|genMeta}}') + '\n'
 
     # pure data code
     module_data_code += _make_data(lower_itemid, number_of_items_per_chunk) + '\n\n'
@@ -73,7 +73,7 @@ def _make_data(lower_itemid: int, number_of_items_per_chunk: int):
 
         stopwatch = Stopwatch()
         # create the code for this chunk from the datagen
-        new_module_code_chunk = parse_wikitext(module_invocation_code)
+        new_module_code_chunk = parse_wikitext(Bot.site, module_invocation_code)
         if new_module_code_chunk:
             stopwatch.stop()
             logger.info(f"    parsed in {stopwatch}")
@@ -169,7 +169,7 @@ def _no_actual_changes(new_data_text: str, current_data_text: str):
 
 def _get_max_itemid():
     """Return the greatest item ID by expanding {{iteminfo/maxId}}."""
-    parsed_wikitext = parse_wikitext("{{iteminfo/maxId}}")
+    parsed_wikitext = parse_wikitext(Bot.site, "{{iteminfo/maxId}}")
     if parsed_wikitext:
         try:
             return int(parsed_wikitext)
