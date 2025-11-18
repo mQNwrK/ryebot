@@ -43,7 +43,7 @@ def script_main():
 
     save_page(Bot.site, Bot.dry_run, module_page, new_module_code, summary, minor=True)
 
-    module_code_with_json = parse_wikitext('{{#invoke:Iteminfo/datagen|convertToJsonData}}')
+    module_code_with_json = parse_wikitext(Bot.site, '{{#invoke:Iteminfo/datagen|convertToJsonData}}')
 
     target_module, _ = read_page(Bot.site, target_module_name)
     save_page(Bot.site, Bot.dry_run, target_module, module_code_with_json, summary, minor=True)
