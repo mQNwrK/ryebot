@@ -11,6 +11,14 @@ from ryebot.wiki_util import parse_wikitext, read_page, save_page
 logger = logging.getLogger(__name__)
 
 
+# Since some point between 2023-08-21 and 2023-09-15, the Cloudflare in
+# front of wiki.gg's servers issues a "challenge" (a CAPTCHA meant to
+# be solved by a human) along with an "Error 429: Too Many Requests"
+# after about 60 requests have been made in rapid succession.
+# https://developers.cloudflare.com/firewall/cf-firewall-rules/cloudflare-challenges/#detecting-a-challenge-page-response
+CLOUDFLARE_SAFETY_DELAY: float = 6  # in seconds
+
+
 def script_main():
     logger.info(f"Started {Bot.scriptname_to_run}.")
     Bot.site = login()
@@ -41,9 +49,18 @@ def script_main():
 
     new_module_code = head + module_data_code + foot
 
+    logger.debug(f"Sleeping to avoid Cloudflare challenge: {CLOUDFLARE_SAFETY_DELAY} sec")
+    time.sleep(CLOUDFLARE_SAFETY_DELAY)
+
     save_page(Bot.site, Bot.dry_run, module_page, new_module_code, summary, minor=True)
 
+    logger.debug(f"Sleeping to avoid Cloudflare challenge: {CLOUDFLARE_SAFETY_DELAY} sec")
+    time.sleep(CLOUDFLARE_SAFETY_DELAY)
+
     module_code_with_json = parse_wikitext(Bot.site, '{{#invoke:Iteminfo/datagen|convertToJsonData}}')
+
+    logger.debug(f"Sleeping to avoid Cloudflare challenge: {CLOUDFLARE_SAFETY_DELAY} sec")
+    time.sleep(CLOUDFLARE_SAFETY_DELAY)
 
     target_module, _ = read_page(Bot.site, target_module_name)
     save_page(Bot.site, Bot.dry_run, target_module, module_code_with_json, summary, minor=True)
@@ -67,6 +84,9 @@ def _make_data(lower_itemid: int, number_of_items_per_chunk: int):
 
     module_code_chunks = []
     while lower_itemid <= max_itemid:
+        logger.debug(f"Sleeping to avoid Cloudflare challenge: {CLOUDFLARE_SAFETY_DELAY} sec")
+        time.sleep(CLOUDFLARE_SAFETY_DELAY)
+
         upper_itemid = min(lower_itemid + number_of_items_per_chunk - 1, max_itemid)
         module_invocation_code = f"{{{{#invoke:Iteminfo/datagen|gen|{lower_itemid}|{upper_itemid}}}}}"
         logger.info(module_invocation_code)
@@ -169,6 +189,8 @@ def _no_actual_changes(new_data_text: str, current_data_text: str):
 
 def _get_max_itemid():
     """Return the greatest item ID by expanding {{iteminfo/maxId}}."""
+    logger.debug(f"Sleeping to avoid Cloudflare challenge: {CLOUDFLARE_SAFETY_DELAY} sec")
+    time.sleep(CLOUDFLARE_SAFETY_DELAY)
     parsed_wikitext = parse_wikitext(Bot.site, "{{iteminfo/maxId}}")
     if parsed_wikitext:
         try:
