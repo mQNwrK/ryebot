@@ -216,7 +216,22 @@ def _update_mapviewer_version_in_wikitext(
     logger.info(f"Current version: {current_version}")
     logger.info(f"New version: {mapviewer_info.new_version}")
 
-    if mapviewer_info.new_version <= current_version:
+    version_needs_update = mapviewer_info.new_version > current_version
+    # edge case fix for TEdit: "beta" numbers must be compared as numbers, not
+    # strings, otherwise e.g. "5.0.0-beta19" is considered to be older than
+    # "5.0.0-beta8"
+    if (
+        mapviewer_info.new_version.major == current_version.major
+        and mapviewer_info.new_version.minor == current_version.minor
+        and mapviewer_info.new_version.patch == current_version.patch
+        and len(mapviewer_info.new_version.prerelease) == len(current_version.prerelease) == 1
+    ):
+        new_version_beta = re.match(r'^beta(\d)+$', mapviewer_info.new_version.prerelease[0])
+        current_version_beta = re.match(r'^beta(\d)+$', current_version.prerelease[0])
+        if new_version_beta is not None and current_version_beta is not None:
+            version_needs_update = int(new_version_beta.group(1)) > int(current_version_beta.group(1))
+
+    if not version_needs_update:
         logger.info(
             (
                 "Skipped the map viewer because the new version "
