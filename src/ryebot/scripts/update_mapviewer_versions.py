@@ -1,4 +1,5 @@
 import logging
+import re
 import time
 from typing import NamedTuple
 from urllib.parse import urlparse
