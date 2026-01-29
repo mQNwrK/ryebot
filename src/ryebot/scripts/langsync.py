@@ -438,7 +438,7 @@ def _get_pages_from_page_cfg(pages_from_config: str):
     return _get_info_for_titles(list(pages_from_config))
 
 
-def _get_info_for_titles(pagetitles: 'list[str]', site: WikiClient):
+def _get_info_for_titles(pagetitles: 'list[str]', site: WikiClient | None = None):
     """Return page content and revision ID for each page in the `pagetitles`.
 
     Return a dict where the key is the page's ID and the value is another dict
@@ -458,6 +458,7 @@ def _get_info_for_titles(pagetitles: 'list[str]', site: WikiClient):
 
     if site is None:
         site = Bot.site
+
 
     raw_pageinfo = {}
 
