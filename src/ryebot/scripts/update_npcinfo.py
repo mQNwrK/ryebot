@@ -11,6 +11,14 @@ from ryebot.wiki_util import parse_wikitext, read_page, save_page
 logger = logging.getLogger(__name__)
 
 
+# Since some point between 2023-08-21 and 2023-09-15, the Cloudflare in
+# front of wiki.gg's servers issues a "challenge" (a CAPTCHA meant to
+# be solved by a human) along with an "Error 429: Too Many Requests"
+# after about 60 requests have been made in rapid succession.
+# https://developers.cloudflare.com/firewall/cf-firewall-rules/cloudflare-challenges/#detecting-a-challenge-page-response
+CLOUDFLARE_SAFETY_DELAY: float = 6  # in seconds
+
+
 def script_main():
     logger.info(f"Started {Bot.scriptname_to_run}.")
     Bot.site = login()
@@ -22,6 +30,9 @@ def script_main():
 
     # terraria version and generation timestamp
     module_data_code = parse_wikitext(Bot.site, '{{#invoke:Npcinfo/datagen|genMeta}}') + '\n'
+
+    logger.debug(f"Sleeping to avoid Cloudflare challenge: {CLOUDFLARE_SAFETY_DELAY} sec")
+    time.sleep(CLOUDFLARE_SAFETY_DELAY)
 
     # pure data code
     module_data_code += _make_data(number_of_npcs_per_chunk) + '\n\n'
@@ -38,6 +49,9 @@ def script_main():
         return
 
     new_module_code = head + module_data_code + foot
+
+    logger.debug(f"Sleeping to avoid Cloudflare challenge: {CLOUDFLARE_SAFETY_DELAY} sec")
+    time.sleep(CLOUDFLARE_SAFETY_DELAY)
 
     save_page(Bot.site, Bot.dry_run, module_page, new_module_code, summary, minor=True)
 
@@ -94,6 +108,9 @@ def _make_data(number_of_npcs_per_chunk: int):
 
         # for the next chunk
         lower_npcid += number_of_npcs_per_chunk
+
+        logger.debug(f"Sleeping to avoid Cloudflare challenge: {CLOUDFLARE_SAFETY_DELAY} sec")
+        time.sleep(CLOUDFLARE_SAFETY_DELAY)
 
     return ''.join(module_code_chunks)
 
