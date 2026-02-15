@@ -26,7 +26,7 @@ def script_main():
     summary = Bot.summary("[[User:Ryebot/bot/scripts/npcinfodata|Updated]].")
     target_module_name = "Module:Npcinfo/data"
 
-    number_of_npcs_per_chunk = 100
+    number_of_npcs_per_chunk = 200
 
     # terraria version and generation timestamp
     module_data_code = parse_wikitext(Bot.site, '{{#invoke:Npcinfo/datagen|genMeta}}') + '\n'
