@@ -21,12 +21,12 @@ def script_main():
     number_of_npcs_per_chunk = 100
 
     # terraria version and generation timestamp
-    module_data_code = parse_wikitext('{{#invoke:Npcinfo/datagen|genMeta}}') + '\n'
+    module_data_code = parse_wikitext(Bot.site, '{{#invoke:Npcinfo/datagen|genMeta}}') + '\n'
 
     # pure data code
     module_data_code += _make_data(number_of_npcs_per_chunk) + '\n\n'
 
-    module_page, existing_module_text = read_page(target_module_name)
+    module_page, existing_module_text = read_page(Bot.site, target_module_name)
     head, body, foot = _get_existing_module_text_parts(module_page, existing_module_text)
 
     # compare the just generated pure data code with the existing pure data code
@@ -76,7 +76,7 @@ def _make_data(number_of_npcs_per_chunk: int):
 
         stopwatch = Stopwatch()
         # create the code for this chunk from the datagen
-        new_module_code_chunk = parse_wikitext(module_invocation_code)
+        new_module_code_chunk = parse_wikitext(Bot.site, module_invocation_code)
         if new_module_code_chunk:
             stopwatch.stop()
             logger.info(f"    parsed in {stopwatch}")
@@ -172,7 +172,7 @@ def _no_actual_changes(new_data_text: str, current_data_text: str):
 
 def _get_max_npcid():
     """Return the greatest NPC ID by expanding {{npcinfo/maxId}}."""
-    parsed_wikitext = parse_wikitext("{{npcinfo/maxId}}")
+    parsed_wikitext = parse_wikitext(Bot.site, "{{npcinfo/maxId}}")
     if parsed_wikitext:
         try:
             return int(parsed_wikitext)
@@ -183,7 +183,7 @@ def _get_max_npcid():
 
 def _get_min_npcid():
     """Return the greatest NPC ID by expanding {{npcinfo/minId}}."""
-    parsed_wikitext = parse_wikitext("{{npcinfo/minId}}")
+    parsed_wikitext = parse_wikitext(Bot.site, "{{npcinfo/minId}}")
     if parsed_wikitext:
         try:
             return int(parsed_wikitext)
