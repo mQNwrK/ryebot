@@ -529,10 +529,11 @@ def _normalize_page_titles(titles: 'list[str]', site: WikiClient = None):
     }
     """
 
-    site = site or Bot.site
+    if site is None:
+        site = Bot.site
 
     pagetitles_to_ids = dict.fromkeys(titles, {})
-    for titles_slice in chunked(titles):
+    for titles_slice in chunked(titles, site):
         api_result = site.post('query', titles='|'.join(titles_slice))
         # convert the "normalized" list from the API response.
         # original format: [ {'from': 'foo', 'to': 'Foo' } ]
@@ -551,7 +552,7 @@ def _normalize_page_titles(titles: 'list[str]', site: WikiClient = None):
     return pagetitles_to_ids
 
 
-def chunked(list_to_chunk, limit_low: int = 50, limit_high = 500):
+def chunked(list_to_chunk, site: WikiClient = None, limit_low: int = 50, limit_high = 500):
     """Split the list into equal-sized chunks (sub-lists).
 
     The size of the chunks (`limit_low` or `limit_high`) depends on the
@@ -559,7 +560,10 @@ def chunked(list_to_chunk, limit_low: int = 50, limit_high = 500):
     generator.
     """
 
-    limit = limit_high if 'apihighlimits' in Bot.site.rights else limit_low
+    if site is None:
+        site = Bot.site
+
+    limit = limit_high if 'apihighlimits' in site.rights else limit_low
     for slicestart in range(0, len(list_to_chunk), limit):
         yield list_to_chunk[slicestart:slicestart+limit]
 
