@@ -1,4 +1,6 @@
+import json
 import logging
+import re
 import time
 
 from ryebot.bot import Bot
@@ -40,19 +42,21 @@ def script_main():
     head, body, foot = _get_existing_module_text_parts(module_page, existing_module_text)
 
     # compare the just generated pure data code with the existing pure data code
-    if _no_actual_changes(module_data_code, body):
+    if _no_actual_changes_intermediate(module_data_code, body):
         logger.info(
-            "No changes to be made.",
-            extra = {"head": "No changes", "body": "The database appears to be up-to-date."}
+            "No changes to be made to the intermediate database.",
+            extra = {
+                "head": f"No changes to {module_page.name}",
+                "body": "The intermediate database appears to be up-to-date."
+            }
         )
-        return
+    else:
+        new_module_code = head + module_data_code + foot
 
-    new_module_code = head + module_data_code + foot
+        logger.debug(f"Sleeping to avoid Cloudflare challenge: {CLOUDFLARE_SAFETY_DELAY} sec")
+        time.sleep(CLOUDFLARE_SAFETY_DELAY)
 
-    logger.debug(f"Sleeping to avoid Cloudflare challenge: {CLOUDFLARE_SAFETY_DELAY} sec")
-    time.sleep(CLOUDFLARE_SAFETY_DELAY)
-
-    save_page(Bot.site, Bot.dry_run, module_page, new_module_code, summary, minor=True)
+        save_page(Bot.site, Bot.dry_run, module_page, new_module_code, summary, minor=True)
 
     logger.debug(f"Sleeping to avoid Cloudflare challenge: {CLOUDFLARE_SAFETY_DELAY} sec")
     time.sleep(CLOUDFLARE_SAFETY_DELAY)
@@ -62,8 +66,18 @@ def script_main():
     logger.debug(f"Sleeping to avoid Cloudflare challenge: {CLOUDFLARE_SAFETY_DELAY} sec")
     time.sleep(CLOUDFLARE_SAFETY_DELAY)
 
-    target_module, _ = read_page(Bot.site, target_module_name)
-    save_page(Bot.site, Bot.dry_run, target_module, module_code_with_json, summary, minor=True)
+    target_module, existing_target_module_text = read_page(Bot.site, target_module_name)
+
+    if _no_actual_changes(module_code_with_json, existing_target_module_text):
+        logger.info(
+            "No changes to be made to the final database.",
+            extra = {
+                "head": f"No changes to {target_module.name}",
+                "body": "The final database appears to be up-to-date."
+            }
+        )
+    else:
+        save_page(Bot.site, Bot.dry_run, target_module, module_code_with_json, summary, minor=True)
 
 
 def _make_data(lower_itemid: int, number_of_items_per_chunk: int):
@@ -168,8 +182,8 @@ def _get_existing_module_text_parts(module_page, module_text: str):
     )
 
 
-def _no_actual_changes(new_data_text: str, current_data_text: str):
-    """Check if there is an actual difference in data between current and new.
+def _no_actual_changes_intermediate(new_data_text: str, current_data_text: str):
+    """Check if there is an actual difference in data of the intermediate module.
 
     It is possible that the `new_data_text` merely has whitespace changes,
     or perhaps additional or removed blank lines. In this case, the actual
@@ -184,6 +198,28 @@ def _no_actual_changes(new_data_text: str, current_data_text: str):
     return (
         [line for line in new_data_lines if not line.startswith("['_generated']")]
         == [line for line in current_data_lines if not line.startswith("['_generated']")]
+    )
+
+
+def _no_actual_changes(new_data_text: str, current_data_text: str):
+    """Check if there is an actual difference in data of the result module.
+
+    The keys of the JSON object most likely have a different order, so they are
+    ordered first before the comparison.
+    """
+
+    # pattern for extracting the JSON data from the output of {{#invoke:Iteminfo/datagen|convertToJsonData}}
+    pattern = re.compile(r'^\["(?P<key>data|nameDB)"\] = \[=====\[(?P<value>\{.*?\})\]=====\]', re.M)
+
+    def _extract_json(luatext):
+        json_lines = []
+        for match in pattern.finditer(luatext):
+            json_lines.append('"' + match.group('key') + '":' + match.group('value'))
+        return json.loads('{' + ','.join(json_lines) + '}')
+
+    return (
+        json.dumps(_extract_json(new_data_text), sort_keys=True)
+        == json.dumps(_extract_json(current_data_text), sort_keys=True)
     )
 
 
