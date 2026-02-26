@@ -34,11 +34,12 @@ CLOUDFLARE_SAFETY_DELAY: float = 15  # in seconds
 
 
 def script_main():
-    logger.info(f"Started {Bot.scriptname_to_run}.")
+    logger.info(f"Started {Bot.scriptname_to_run}{f" (via {Bot.scriptname_to_run_parent})" if Bot.is_sub_script else ''}.")
     Bot.site = login()
 
     config = ScriptConfiguration("langsync", DEFAULT_CONFIG)
-    config.set_from_wiki()
+    if not Bot.is_sub_script:
+        config.set_from_wiki()
     config.set_from_string(Bot.config_from_commandline)
 
     # ------------- Get wiki names from config, validate them -------------

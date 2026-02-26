@@ -6,6 +6,7 @@ _scriptnames = [
     "extensionupdates",
     "langinfodata",
     "langsync",
+    "langsynccont",
     "testscript",
     "update_iteminfo",
     "update_npcinfo",
