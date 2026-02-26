@@ -1,13 +1,13 @@
 from importlib import import_module
 
 _scriptnames = [
+    "autolangsync",
     "capsredirects",
     "csscompile",
     "excludata",
     "extensionupdates",
     "langinfodata",
     "langsync",
-    "langsynccont",
     "testscript",
     "update_iteminfo",
     "update_mapviewer_versions",

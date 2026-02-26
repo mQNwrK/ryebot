@@ -19,7 +19,7 @@ def script_main():
     logger.info(f"Started {Bot.scriptname_to_run}.")
     Bot.site = login()
 
-    config = ScriptConfiguration("langsynccont", DEFAULT_CONFIG)
+    config = ScriptConfiguration("autolangsync", DEFAULT_CONFIG)
     config.set_from_wiki()
 
     Bot.run_sub_script("langsync", config.to_string())
