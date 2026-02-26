@@ -66,6 +66,11 @@ class ScriptConfiguration(MutableMapping):
             self._ensure_default_keys()
 
 
+    def to_string(self):
+        """Serialize the configuration as a JSON string."""
+        return json.dumps(self._config)
+
+
     def set_from_wiki(self, pagename: str = ''):
         """Update the configuration from a page on the wiki.
 

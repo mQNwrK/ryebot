@@ -1,3 +1,5 @@
+from importlib import import_module
+
 from custom_mwclient import WikiClient
 
 
@@ -7,6 +9,15 @@ class _Bot(type):
     @property  # read-only attribute
     def scriptname_to_run(cls) -> str:
         return cls._scriptname_to_run
+
+    @property  # read-only attribute
+    def scriptname_to_run_parent(cls) -> str:
+        return cls._scriptname_to_run_parent
+
+    @property
+    def is_sub_script(cls):
+        """Whether the current script was started from another script as a sub-script."""
+        return cls.scriptname_to_run != cls.scriptname_to_run_parent
 
     @property  # read-only attribute
     def dry_run(cls) -> bool:
@@ -25,6 +36,7 @@ class Bot(metaclass=_Bot):
     """Provides module-wide variables and functions."""
 
     _scriptname_to_run: str = ''
+    _scriptname_to_run_parent: str = ''
     _dry_run: bool = False
     _config_from_commandline: str = ''
     _is_on_github_actions: bool = False
@@ -35,9 +47,42 @@ class Bot(metaclass=_Bot):
 
     def init_from_commandline_parameters(scriptname_to_run: str, dry_run: bool, config: str, is_on_github_actions: bool):
         Bot._scriptname_to_run = scriptname_to_run
+        Bot._scriptname_to_run_parent = scriptname_to_run
         Bot._dry_run = dry_run
         Bot._config_from_commandline = config
         Bot._is_on_github_actions = is_on_github_actions
+
+    def run_sub_script(sub_script_name: str, config: str = ''):
+        """Run another bot script from the current script."""
+        try:
+            scriptfunction = import_module("ryebot.scripts." + sub_script_name).script_main
+        except ModuleNotFoundError:
+            raise ValueError(f'unknown script name "{sub_script_name}"')
+
+        class SubScriptContext:
+            """Context manager for the sub-script.
+
+            It preserves the current script name and config, updates them for
+            executing the sub-script, and restores them when the execution of
+            the sub-script is finished."""
+
+            def __init__(self):
+                self._parentscriptname_cache = Bot.scriptname_to_run_parent
+                self._scriptname_cache = Bot.scriptname_to_run
+                self._config_cache = Bot.config_from_commandline
+
+            def __enter__(self):
+                Bot._scriptname_to_run_parent = Bot.scriptname_to_run
+                Bot._scriptname_to_run = sub_script_name
+                Bot._config_from_commandline = config
+
+            def __exit__(self, exc_type, exc_value, traceback):
+                Bot._scriptname_to_run_parent = self._parentscriptname_cache
+                Bot._scriptname_to_run = self._scriptname_cache
+                Bot._config_from_commandline = self._config_cache
+
+        with SubScriptContext():
+            scriptfunction()
 
     def summary(summary_core_text: str = ''):
         """Append the common suffix, truncating the core text if necessary."""
