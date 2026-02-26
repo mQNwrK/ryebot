@@ -11,15 +11,15 @@ from ryebot.errors import ScriptRuntimeError
 logger = logging.getLogger(__name__)
 
 
-def get_page_and_text(site: WikiClient, pagename: str) -> 'tuple[Page, str]':
-    """Safely get the `Page` object and its text for the `pagename`."""
+def get_page(site: WikiClient, pagename: str) -> Page:
+    """Safely get the `Page` object for the `pagename`."""
     logstr = f'Error while reading "{pagename}":'
     errorstr = f'Reading "{pagename}" failed'
     common_body_str = "Couldn't fetch the page due to some error; check the logs for details."
 
     # safely fetch page object
     try:
-        page: Page = site.pages[pagename]
+        return site.pages[pagename]
     except InvalidPageTitle:
         logger.exception(
             logstr,
@@ -33,9 +33,16 @@ def get_page_and_text(site: WikiClient, pagename: str) -> 'tuple[Page, str]':
         logger.exception(logstr, extra={"head": errorstr, "body": common_body_str})
         raise ScriptRuntimeError(errorstr)
 
+
+def get_pagetext(page: Page) -> str:
+    """Safely get the text of the `Page` object."""
+    logstr = f'Error while reading "{page.name}":'
+    errorstr = f'Reading "{page.name}" failed'
+    common_body_str = "Couldn't fetch the page due to some error; check the logs for details."
+
     # safely fetch page text
     try:
-        pagetext = page.text()
+        return page.text()
     except InsufficientPermission:
         logger.exception(
             logstr,
@@ -49,6 +56,11 @@ def get_page_and_text(site: WikiClient, pagename: str) -> 'tuple[Page, str]':
         logger.exception(logstr, extra={"head": errorstr, "body": common_body_str})
         raise ScriptRuntimeError(errorstr)
 
+
+def get_page_and_text(site: WikiClient, pagename: str) -> 'tuple[Page, str]':
+    """Safely get the `Page` object and its text for the `pagename`."""
+    page = get_page(site, pagename)
+    pagetext = get_pagetext(page)
     return page, pagetext
 
 
