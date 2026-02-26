@@ -1,6 +1,7 @@
 from importlib import import_module
 
 _scriptnames = [
+    "capsredirects",
     "csscompile",
     "excludata",
     "extensionupdates",
@@ -9,8 +10,8 @@ _scriptnames = [
     "langsynccont",
     "testscript",
     "update_iteminfo",
+    "update_mapviewer_versions",
     "update_npcinfo",
-    "update_mapviewer_versions"
 ]
 
 scriptfunctions = dict(zip(
