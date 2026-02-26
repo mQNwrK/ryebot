@@ -7,7 +7,7 @@ from ryebot.bot import Bot
 from ryebot.errors import ScriptRuntimeError
 from ryebot.login import login
 from ryebot.stopwatch import Stopwatch
-from ryebot.wiki_util import parse_wikitext, read_page, save_page
+from ryebot.wiki_util import get_page_and_text, parse_wikitext, save_page
 
 
 logger = logging.getLogger(__name__)
@@ -38,7 +38,7 @@ def script_main():
     # pure data code
     module_data_code += _make_data(lower_itemid, number_of_items_per_chunk) + '\n\n'
 
-    module_page, existing_module_text = read_page(Bot.site, intermediate_module_name)
+    module_page, existing_module_text = get_page_and_text(Bot.site, intermediate_module_name)
     head, body, foot = _get_existing_module_text_parts(module_page, existing_module_text)
 
     # compare the just generated pure data code with the existing pure data code
@@ -66,7 +66,7 @@ def script_main():
     logger.debug(f"Sleeping to avoid Cloudflare challenge: {CLOUDFLARE_SAFETY_DELAY} sec")
     time.sleep(CLOUDFLARE_SAFETY_DELAY)
 
-    target_module, existing_target_module_text = read_page(Bot.site, target_module_name)
+    target_module, existing_target_module_text = get_page_and_text(Bot.site, target_module_name)
 
     if _no_actual_changes(module_code_with_json, existing_target_module_text):
         logger.info(

@@ -11,7 +11,7 @@ from ryebot.errors import ScriptRuntimeError
 logger = logging.getLogger(__name__)
 
 
-def read_page(site: WikiClient, pagename: str) -> 'tuple[Page, str]':
+def get_page_and_text(site: WikiClient, pagename: str) -> 'tuple[Page, str]':
     """Safely get the `Page` object and its text for the `pagename`."""
     logstr = f'Error while reading "{pagename}":'
     errorstr = f'Reading "{pagename}" failed'
