@@ -54,12 +54,13 @@ def read_page(site: WikiClient, pagename: str) -> 'tuple[Page, str]':
 
 def save_page(site: WikiClient, dry_run: bool, page: Page, pagetext: str, summary: str, minor: bool = True, loglevel: int = logging.INFO):
     """Save the `Page` object with the new `pagetext` and `summary`."""
+    summary_str = 'no summary' if summary is None else f'summary "{summary}"'
     if dry_run:
         chardiff_str = f"{len(pagetext) - (page.length or 0):+} diff"
         logger.log(
             loglevel,
             f'Would save page "{page.name}" ({len(pagetext)} characters, '
-            f'{chardiff_str}) with summary "{summary}".'
+            f'{chardiff_str}) with {summary_str}.'
         )
     else:
         warningstr = f'Did not save the page "{page.name}"'
@@ -86,7 +87,7 @@ def save_page(site: WikiClient, dry_run: bool, page: Page, pagetext: str, summar
                 extra = {
                     "head": warningstr,
                     "body": (
-                        f'Couldn\'t save the page due to some error; '
+                        f"Couldn't save the page due to some error; "
                         "check the logs for details."
                     )
                 }
@@ -97,7 +98,7 @@ def save_page(site: WikiClient, dry_run: bool, page: Page, pagetext: str, summar
             diff_link = site.fullurl(diff=diff_id) if diff_id else None
             logger.log(
                 loglevel,
-                f'Saved page "{page.name}" with summary "{summary}". '
+                f'Saved page "{page.name}" with {summary_str}. '
                 f"Diff: {diff_link}. Time: {stopwatch}"
             )
 
