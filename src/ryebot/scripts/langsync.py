@@ -137,7 +137,9 @@ def script_main():
             if not pages[wiki][pageid]['needs_sync']:
                 continue
 
-            scriptlink = '[[:en:User:Ryebot/bot/scripts/langsync|sync]]'
+            # the "parent" script name to run is normally 'langsync' but it may
+            # be different if this script was started from another script
+            scriptlink = f'[[:en:User:Ryebot/bot/scripts/{Bot.scriptname_to_run_parent}|sync]]'
             summary = Bot.summary(f"{scriptlink} :: en revid:{page['revid']}::")
 
             # fetch the page from the target wiki
