@@ -31,6 +31,7 @@ DEFAULT_CONFIG = {
 # after about 60 requests have been made in rapid succession.
 # https://developers.cloudflare.com/firewall/cf-firewall-rules/cloudflare-challenges/#detecting-a-challenge-page-response
 CLOUDFLARE_SAFETY_DELAY: float = 15  # in seconds
+CLOUDFLARE_SAFETY_DELAY_LOW: float = 4  # in seconds
 
 
 def script_main():
@@ -402,8 +403,8 @@ def _get_info_for_categorymembers(categorynames: 'list[str]'):
         }
 
         while True:
-            logger.debug(f"Sleeping to avoid Cloudflare challenge: {CLOUDFLARE_SAFETY_DELAY} sec")
-            time.sleep(CLOUDFLARE_SAFETY_DELAY)
+            logger.debug(f"Sleeping to avoid Cloudflare challenge: {CLOUDFLARE_SAFETY_DELAY_LOW} sec")
+            time.sleep(CLOUDFLARE_SAFETY_DELAY_LOW)
             api_result = Bot.site.api('query', **api_parameters)
             api_result_pagelist: dict = api_result.get('query', {}).get('pages', {})
             # merge the data for each page with the existing data
@@ -476,8 +477,8 @@ def _get_info_for_titles(pagetitles: 'list[str]', site: WikiClient = None):
         }
 
         while True:
-            logger.debug(f"Sleeping to avoid Cloudflare challenge: {CLOUDFLARE_SAFETY_DELAY} sec")
-            time.sleep(CLOUDFLARE_SAFETY_DELAY)
+            logger.debug(f"Sleeping to avoid Cloudflare challenge: {CLOUDFLARE_SAFETY_DELAY_LOW} sec")
+            time.sleep(CLOUDFLARE_SAFETY_DELAY_LOW)
             api_result = site.api('query', **api_parameters)
             api_result_pagelist: dict = api_result.get('query', {}).get('pages', {})
             # merge the data for each page with the existing data.
@@ -513,8 +514,8 @@ def _get_info_for_titles(pagetitles: 'list[str]', site: WikiClient = None):
 def _pagetitles_to_ids(titles: 'list[str]'):
     """Return the page IDs of the `titles` and disregard missing pages and invalid titles."""
     for titles_slice in chunked(titles):
-        logger.debug(f"Sleeping to avoid Cloudflare challenge: {CLOUDFLARE_SAFETY_DELAY} sec")
-        time.sleep(CLOUDFLARE_SAFETY_DELAY)
+        logger.debug(f"Sleeping to avoid Cloudflare challenge: {CLOUDFLARE_SAFETY_DELAY_LOW} sec")
+        time.sleep(CLOUDFLARE_SAFETY_DELAY_LOW)
         api_result = Bot.site.post('query', titles='|'.join(titles_slice))
         api_result_pagelist: dict = api_result['query']['pages']
         for pageid in api_result_pagelist.keys():
@@ -543,8 +544,8 @@ def _normalize_page_titles(titles: 'list[str]', site: WikiClient = None):
 
     pagetitles_to_ids = dict.fromkeys(titles, {})
     for titles_slice in chunked(titles, site):
-        logger.debug(f"Sleeping to avoid Cloudflare challenge: {CLOUDFLARE_SAFETY_DELAY} sec")
-        time.sleep(CLOUDFLARE_SAFETY_DELAY)
+        logger.debug(f"Sleeping to avoid Cloudflare challenge: {CLOUDFLARE_SAFETY_DELAY_LOW} sec")
+        time.sleep(CLOUDFLARE_SAFETY_DELAY_LOW)
         api_result = site.post('query', titles='|'.join(titles_slice))
         # convert the "normalized" list from the API response.
         # original format: [ {'from': 'foo', 'to': 'Foo' } ]
